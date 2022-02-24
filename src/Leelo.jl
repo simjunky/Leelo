@@ -48,6 +48,38 @@ function function_to_test()::String
 end
 
 
+"Runs the entire simulation and plotting procedure depending on given arguments"
+function run_sim(args::Vector{String})
+    @info "run_sim() called"
+
+    # TODO: identify the correct configuration from the arguments:
+    config = SingleObjectiveBasicConfig()
+
+    # TODO: identify where to load the data from and load it:
+    data = read_model_data()
+
+    # Build model depending on config and data
+    model = build_base_model(config, data)
+
+    # add model variables
+    add_model_variables(model, config, data)
+    # add model constraints
+    add_model_constraints(model, config, data)
+    # add model objective function
+    add_model_objective(model, config, data)
+
+    # solve the model
+    JuMP.optimize!(model)
+
+    # write output to file
+    write_results(model, config, data, "ThisFileName")
+    create_plots(model, config, data)
+
+
+    @info "end of run_sim()"
+    return nothing
+end
+
 
 
 # Configuration
