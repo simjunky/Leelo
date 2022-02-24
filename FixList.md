@@ -17,9 +17,17 @@ Problems or inconsistencies found in old, `GAMS`-implemented LEELO version. Prob
 7. Gams does not specify what `etaconv(ct)` is, or what unit its in.
 8. `CostOperation[...]ST` again has the problem of € in GAMS comment, but should be in k$
 9. Conversion technologies mix around in between being installed in MWh or MW... which one is it?
+10. Why is the `CostOperationFixL` in Excels `InputsL` a) in k-Euro/MW and b) rounded to full euros (ok, its just the view, not the Data.)? Or other point on this Excel-Sheet: Why is so much calculated within Excel? and not by the programm, which would reduce the number of inputs and thereby comlexity for the user.
 
 ## Open questions
 
 Questions related to the understanding.
 
 1. What is the storage technologies `Energy2PowerRatio` for? and what energy is compared to what power? stored Energy or overall energy that has been stored? Wha is it important?
+
+## Big To-Do's
+
+Some bigger To-Do's to keep in mind and not hide within the code.
+
+1. Revise all inputs to check if they are neccessairy. (And cannot be calculated off of some other inputs already given; e.g. Annuity, CostCapL, CostOperation...L, etc.) (Also: clean input files afterward)
+2. rename programm variables to make them more verbose and not as obscure as currently.
