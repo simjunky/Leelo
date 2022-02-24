@@ -36,7 +36,7 @@ function read_model_data()::ModelData
     ren_generator_profile_file = folder * "renewable_generators_profiles.csv"
 
     # TODO: keep replacing placeholder-zeros with real values
-    model_data = ModelData( interest_rate = 0.0,
+    model_data = ModelData(interest_rate = 0.0,
                         dt = 0.0,
                         nt = 0,
                         modelType = "0",
@@ -72,7 +72,7 @@ function read_model_data()::ModelData
                         lifetimeR = [0],
                         annuityR = [0.0],
                         technologyR = ["0"],
-                        profilesR= [0.0 0.0 0.0; 0.0 0.0 0.0; 0.0 0.0 0.0],
+                        profilesR= zeros(Float64, (1,1,1)),
                         minCapacityPotR = [0.0 0.0; 0.0 0.0],
                         maxCapacityPotR = [0.0 0.0; 0.0 0.0],
                         pexistingR = [0.0 0.0; 0.0 0.0],
