@@ -1,7 +1,45 @@
 module Leelo
 
+
+# TODO: neccessairy import statements
+import JuMP
+import CPLEX
+
+# TODO: change using statements to import statements and use dot notation to keep namespace clean
+using CSV # used by DataInput.jl
+using DataFrames # used by DataInput.jl
+
+
+# TODO: include codefiles containing other functionality
+# DATA STRUCTURE
+include("ModelData.jl")
+# DATA IMPORTS
+include("DataInput.jl")
+
+# export statements
 export greet
 export function_to_test
+
+export run_sim
+
+export ModelData
+export read_model_data
+
+export AbstrConfiguration
+export SingleObjectiveBasicConfig
+export SingleObjectiveMultiServiceConfig
+export MultiObjectiveBasicConfig
+export MultiObjectiveMultiServiceConfig
+
+export build_base_model
+export add_model_variables
+export add_model_constraints
+export add_model_objective
+
+export write_results
+export plot_data
+export plot_results
+export create_plots
 
 greet() = print("Hello World!")
 
