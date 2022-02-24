@@ -11,6 +11,24 @@ end
 
 
 
+
+# Configuration
+abstract type AbstrConfiguration end
+struct SingleObjectiveBasicConfig <: AbstrConfiguration end
+struct SingleObjectiveMultiServiceConfig <: AbstrConfiguration end
+struct MultiObjectiveBasicConfig <: AbstrConfiguration end
+struct MultiObjectiveMultiServiceConfig <: AbstrConfiguration end
+
+
+
+# MODEL BUILDING
+function build_base_model(config::AbstrConfiguration, data::ModelData)::JuMP.Model
+    model = JuMP.direct_model(CPLEX.Optimizer())
+    @info "Created model with CPLEX:" model
+    return model
+end
+
+
 # Variable creation
 function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
     # TODO something along the lines of return @variabl(model, blablabla)
