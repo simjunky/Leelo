@@ -9,20 +9,49 @@ function read_model_data()::ModelData
     # path to folder with input files
     folder = "data/TestLocation/input_data/"
 
+    @info "enter read_model_data()"
+
     # filename of file containing parameters of conventional generators
     conv_generator_parameter_file = folder * "conventional_generators.csv"
 
-    conv_generator_data = CSV.read(conv_generator_parameter_file, DataFrame; delim=',', header=3, select=[:generator_name, :CostCapG, :CostOperationVarG, :Tech])
+    # create DataFrame containing data of conventional generators
+    conv_generator_data = CSV.read(conv_generator_parameter_file, DataFrame; delim = ',', header = 3, types = Dict(:generator_name=>String))
 
-    @show conv_generator_data
-    @show conv_generator_data[!, :generator_name]
-    @show typeof(conv_generator_data[!, :generator_name])
+    @info "read conv gen data"
 
-
+    # filename of file containing parameters of renewable generators
     ren_generator_parameter_file = folder * "renewable_generators.csv"
 
-    ren_generator_data = CSV.read(ren_generator_parameter_file, DataFrame; delim=',', header=3)
+    # create DataFrame containing data of renewable generators
+    ren_generator_data = CSV.read(ren_generator_parameter_file, DataFrame; delim = ',', header = 3)
 
+    @info "read ren gen data"
+
+    # filename of file containing parameters of conversion technologies
+    converter_parameter_file = folder * "conversion_technologies.csv"
+
+    # create DataFrame containing data of conversion technologies
+    converter_data = CSV.read(converter_parameter_file, DataFrame; delim = ',', header = 4)
+
+    @info "read converter data"
+
+    # filename of file containing parameters of storage technologies
+    storage_parameter_file = folder * "storage_technologies.csv"
+
+    # create DataFrame containing data of conversion technologies
+    storage_data = CSV.read(storage_parameter_file, DataFrame; delim = ',', header = 3)
+
+    @info "read storage data"
+
+    # filename of file containing parameters of transmission lines
+    transmission_parameter_file = folder * "transmission_lines.csv"
+
+    # create DataFrame containing data of transmission lines
+    transmission_data = CSV.read(transmission_parameter_file, DataFrame; delim = ',', header = 2)
+
+    @info "read transm data"
+
+    #=
     @show ren_generator_data
     n_buses = 4
     m_pexistingR = zeros(Float64, nrow(ren_generator_data), n_buses)
@@ -32,23 +61,33 @@ function read_model_data()::ModelData
         m_pexistingR[:,i] = ren_generator_data[!, Symbol("pexistingRb$(i)")]
     end
     @show m_pexistingR
+    =#
 
-    ren_generator_profile_file = folder * "renewable_generators_profiles.csv"
+    @show describe(conv_generator_data)
+    @show typeof(conv_generator_data[!, :generator_name])
+    @show conv_generator_data[!, :generator_name]
+    #@show ren_generator_data[!, :generator_name]
+    #@show converter_data[!, :converter_name]
+    #@show storage_data[!, :Storage_Technology]
+    #@show transmission_data[!, :line_name]
+
+
 
     # TODO: keep replacing placeholder-zeros with real values
-    model_data = ModelData(interest_rate = 0.0,
-                        dt = 0.0,
-                        nt = 0,
-                        modelType = "0",
-                        scenario = "0",
-                        curyear = 0,
-                        g_conventional_generator_names = ["0"],
-                        r_renewable_generator_names = ["0"],
-                        ct_conversion_technologies_names = ["0"],
-                        st_storage_technologies_names = ["0"],
-                        b_busses_names = ["0"],
-                        l_transmission_lines_names = ["0"],
-                        t_hourly_timesteps_names = ["0"],
+    #=
+    model_data = ModelData(interest_rate = 0.0, # TODO
+                        dt = 0.0, # TODO
+                        nt = 0, # TODO
+                        modelType = "0", # TODO
+                        scenario = "0", # TODO
+                        curyear = 0, # TODO
+                        g_conventional_generator_names = conv_generator_data[!, :generator_name],
+                        r_renewable_generator_names = ren_generator_data[!, :generator_name],
+                        ct_conversion_technologies_names = converter_data[!, :converter_name],
+                        st_storage_technologies_names = storage_data[!, :Storage_Technology],
+                        b_busses_names = ["0"], # TODO: get names
+                        l_transmission_lines_names = transmission_data[!, :line_name],
+                        t_hourly_timesteps_names = ["0"], # TODO: get names
                         h_hydro_power_generators_names = ["0"],
                         ror_run_of_river_generators_names = ["0"],
                         ic_impact_categories_names = ["0"],
@@ -186,4 +225,6 @@ function read_model_data()::ModelData
                         )
 
     return model_data
+    =#
+    return ModelData()
 end
