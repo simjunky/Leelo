@@ -18,6 +18,9 @@ Problems or inconsistencies found in old, `GAMS`-implemented LEELO version. Prob
 8. `CostOperation[...]ST` again has the problem of € in GAMS comment, but should be in k$
 9. Conversion technologies mix around in between being installed in MWh or MW... which one is it?
 10. Why is the `CostOperationFixL` in Excels `InputsL` a) in k-Euro/MW and b) rounded to full euros (ok, its just the view, not the Data.)? Or other point on this Excel-Sheet: Why is so much calculated within Excel? and not by the programm, which would reduce the number of inputs and thereby comlexity for the user.
+11. Is Excels `InputsH`'s `Pmin(Data)` even used (seems as not) and what is the difference to `PMinH`?
+12. Why do "Equivalent ROR" exist (speedup?)? Why is Excels `InputsROR` -> `PMaxROR` rounded to 100's MW and not the regular sum taken?
+13. Why is there a need for an auxiliary ROR generator? (same with the dummy H)
 
 ## Open questions
 
@@ -29,5 +32,6 @@ Questions related to the understanding.
 
 Some bigger To-Do's to keep in mind and not hide within the code.
 
-1. Revise all inputs to check if they are neccessairy. (And cannot be calculated off of some other inputs already given; e.g. Annuity, CostCapL, CostOperation...L, etc.) (Also: clean input files afterward)
-2. rename programm variables to make them more verbose and not as obscure as currently.
+1. Recheck all Data Input Types if Excel did not round them off (as with the demand profiles)!
+2. Revise all inputs to check if they are neccessairy. (And cannot be calculated off of some other inputs already given; e.g. Annuity, CostCapL, CostOperation...L, etc.) (Also: clean input files afterward)
+3. rename programm variables to make them more verbose and not as obscure as currently.
