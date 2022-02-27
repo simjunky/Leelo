@@ -15,7 +15,7 @@ function read_model_data()::ModelData
     conv_generator_parameter_file = folder * "conventional_generators.csv"
 
     # create DataFrame containing data of conventional generators
-    conv_generator_data = CSV.read(conv_generator_parameter_file, DataFrame; delim = ',', header = 3, types = Dict(:generator_name=>String))
+    conv_generator_data = CSV.read(conv_generator_parameter_file, DataFrame; delim = ',', header = 3, types = Dict(:generator_name=>String, :Tech=>String))
 
     @info "read conv gen data"
 
@@ -23,7 +23,7 @@ function read_model_data()::ModelData
     ren_generator_parameter_file = folder * "renewable_generators.csv"
 
     # create DataFrame containing data of renewable generators
-    ren_generator_data = CSV.read(ren_generator_parameter_file, DataFrame; delim = ',', header = 3)
+    ren_generator_data = CSV.read(ren_generator_parameter_file, DataFrame; delim = ',', header = 3, types = Dict(:generator_name=>String, :tech=>String))
 
     @info "read ren gen data"
 
@@ -31,7 +31,7 @@ function read_model_data()::ModelData
     converter_parameter_file = folder * "conversion_technologies.csv"
 
     # create DataFrame containing data of conversion technologies
-    converter_data = CSV.read(converter_parameter_file, DataFrame; delim = ',', header = 4)
+    converter_data = CSV.read(converter_parameter_file, DataFrame; delim = ',', header = 4, types = Dict(:converter_name=>String, :CT=>String, :input=>String, :output=>String))
 
     @info "read converter data"
 
@@ -39,7 +39,7 @@ function read_model_data()::ModelData
     storage_parameter_file = folder * "storage_technologies.csv"
 
     # create DataFrame containing data of conversion technologies
-    storage_data = CSV.read(storage_parameter_file, DataFrame; delim = ',', header = 3)
+    storage_data = CSV.read(storage_parameter_file, DataFrame; delim = ',', header = 3, types = Dict(:Storage_Technology=>String, :VectorST=>String, :Units_of_installed_capacity=>String))
 
     @info "read storage data"
 
@@ -47,9 +47,33 @@ function read_model_data()::ModelData
     transmission_parameter_file = folder * "transmission_lines.csv"
 
     # create DataFrame containing data of transmission lines
-    transmission_data = CSV.read(transmission_parameter_file, DataFrame; delim = ',', header = 2)
+    transmission_data = CSV.read(transmission_parameter_file, DataFrame; delim = ',', header = 2, types = Dict(:line_name=>String, :BarO=>String, :BarD=>String))
 
     @info "read transm data"
+
+    # filename of file containing electricity demand profiles
+    demand_profile_file = folder * "demand_profiles.csv"
+
+    # create DataFrame containing demand profiles data
+    demand_profile_data = CSV.read(demand_profile_file, DataFrame; delim = ',', header = 1, types = Dict(:timestep_name=>String))
+
+    @info "read demand data"
+
+    # filename of file containing data of hydropower cascades
+    hydro_cascades_file = folder * "hydro_cascades.csv"
+
+    # create DataFrame containing data of hydropower cascades
+    hydro_cascades_data = CSV.read(hydro_cascades_file, DataFrame; delim = ',', header = 1, types = Dict(:BusH=>String, :Code=>String, :hydro_name=>String, :Type=>String, :TurbinedGoesTo=>String, :EcoflowGoesTo=>String, :PumpedGoesTo=>String))
+
+    @info "read hydro data"
+
+    # filename of file containing data of run of river generators
+    hydro_ROR_file = folder * "hydro_run_of_river.csv"
+
+    # create DataFrame containing data of run of river generators
+    hydro_ROR_data = CSV.read(hydro_ROR_file, DataFrame; delim = ',', header = 1, types = Dict(:ror_name=>String, :BusRoR=>String))
+
+    @info "read ROR data"
 
     #=
     @show ren_generator_data
@@ -64,17 +88,22 @@ function read_model_data()::ModelData
     =#
 
     @show describe(conv_generator_data)
-    @show typeof(conv_generator_data[!, :generator_name])
-    @show conv_generator_data[!, :generator_name]
-    #@show ren_generator_data[!, :generator_name]
-    #@show converter_data[!, :converter_name]
-    #@show storage_data[!, :Storage_Technology]
-    #@show transmission_data[!, :line_name]
+    @show describe(ren_generator_data)
+    @show describe(converter_data)
+    @show describe(storage_data)
+    @show describe(transmission_data)
+    @show describe(demand_profile_data)
+    @show describe(hydro_cascades_data)
+    @show describe(hydro_ROR_data)
+
+    @show typeof(hydro_cascades_data[!, :hydro_name])
+    @show hydro_cascades_data[!, :hydro_name]
+
 
 
 
     # TODO: keep replacing placeholder-zeros with real values
-    #=
+
     model_data = ModelData(interest_rate = 0.0, # TODO
                         dt = 0.0, # TODO
                         nt = 0, # TODO
@@ -85,11 +114,11 @@ function read_model_data()::ModelData
                         r_renewable_generator_names = ren_generator_data[!, :generator_name],
                         ct_conversion_technologies_names = converter_data[!, :converter_name],
                         st_storage_technologies_names = storage_data[!, :Storage_Technology],
-                        b_busses_names = ["0"], # TODO: get names
+                        b_busses_names = ["0"], # TODO: get names maybe from demand profiles data?
                         l_transmission_lines_names = transmission_data[!, :line_name],
-                        t_hourly_timesteps_names = ["0"], # TODO: get names
-                        h_hydro_power_generators_names = ["0"],
-                        ror_run_of_river_generators_names = ["0"],
+                        t_hourly_timesteps_names = demand_profile_data[!, :timestep_name],
+                        h_hydro_power_generators_names = hydro_cascades_data[!, :hydro_name],
+                        ror_run_of_river_generators_names = hydro_ROR_data[!, :ror_name],
                         ic_impact_categories_names = ["0"],
                         costCapG = [0.0],
                         costOperationVarG = [0.0],
@@ -225,6 +254,6 @@ function read_model_data()::ModelData
                         )
 
     return model_data
-    =#
-    return ModelData()
+
+    #return ModelData()
 end
