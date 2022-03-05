@@ -27,6 +27,7 @@ Problems or inconsistencies found in old, `GAMS`-implemented LEELO version. Prob
 Questions related to the understanding.
 
 1. What is the storage technologies `Energy2PowerRatio` for? and what energy is compared to what power? stored Energy or overall energy that has been stored? Wha is it important?
+2. What do all 4 coal ramping "auxiliary variables" `rampsAuxCoal1...4` even do? What are they for?... NVM they store values of produces coal power to determine hourly (1&2) and 12h/daily (3&4) coal ramping and associated costs.
 
 ## Big To-Do's
 
@@ -35,3 +36,4 @@ Some bigger To-Do's to keep in mind and not hide within the code.
 1. Recheck all Data Input Types if Excel did not round them off (as with the demand profiles)!
 2. Revise all inputs to check if they are neccessairy. (And cannot be calculated off of some other inputs already given; e.g. Annuity, CostCapL, CostOperation...L, etc.) (Also: clean input files afterward)
 3. rename programm variables to make them more verbose and not as obscure as currently.
+4. Recheck all variable bounds to maybe shrink searchspace
