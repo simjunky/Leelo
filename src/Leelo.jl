@@ -15,6 +15,11 @@ using DataFrames # used by DataInput.jl
 include("ModelData.jl")
 # DATA IMPORTS
 include("DataInput.jl")
+# MODEL VARIABLES
+include("ModelVariables.jl")
+# MODEL CONSTRAINTS
+include("ModelConstraints.jl")
+
 
 # export statements
 export greet
@@ -81,7 +86,6 @@ function run_sim(args::Vector{String})
 end
 
 
-
 # Configuration
 abstract type AbstrConfiguration end
 struct SingleObjectiveBasicConfig <: AbstrConfiguration end
@@ -90,28 +94,11 @@ struct MultiObjectiveBasicConfig <: AbstrConfiguration end
 struct MultiObjectiveMultiServiceConfig <: AbstrConfiguration end
 
 
-
 # MODEL BUILDING
 function build_base_model(config::AbstrConfiguration, data::ModelData)::JuMP.Model
     model = JuMP.direct_model(CPLEX.Optimizer())
     @info "Created model with CPLEX:" model
     return model
-end
-
-
-# Variable creation
-function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
-    # TODO something along the lines of return @variabl(model, blablabla)
-    @info "add_model_variables() called"
-    return
-end
-
-
-# Constraint creation
-function add_model_constraints(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
-    # TODO something along the lines of return @variabl(model, blablabla)
-    @info "add_model_constraints() called"
-    return
 end
 
 
