@@ -266,7 +266,7 @@ struct ModelData
 
     # Transmission
 
-    # (l)    maximum available line capacity to be installed
+    # (l)    maximum available line capacity to be installed in MW
     maxCapacityPotL::Array{Float64, 1}
     # (l)               (origen) bus from which line l starts
     barO::Array{String, 1}
@@ -274,7 +274,7 @@ struct ModelData
     barD::Array{String, 1}
     # (l)            losses of line l (%\MW)
     lossesL::Array{Float64, 1}
-    # (l)          existing line capacity
+    # (l)          existing line capacity in MW
     capLExisting::Array{Float64, 1}
     # (l)           capital cost of line l (k€\MW)
     costCapL::Array{Float64, 1}

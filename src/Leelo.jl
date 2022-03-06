@@ -2,12 +2,20 @@ module Leelo
 
 
 # TODO: neccessairy import statements
-import JuMP
+using JuMP
 import CPLEX
 
 # TODO: change using statements to import statements and use dot notation to keep namespace clean
 using CSV # used by DataInput.jl
 using DataFrames # used by DataInput.jl
+
+
+# Configuration
+abstract type AbstrConfiguration end
+struct SingleObjectiveBasicConfig <: AbstrConfiguration end
+struct SingleObjectiveMultiServiceConfig <: AbstrConfiguration end
+struct MultiObjectiveBasicConfig <: AbstrConfiguration end
+struct MultiObjectiveMultiServiceConfig <: AbstrConfiguration end
 
 
 # TODO: include codefiles containing other functionality
@@ -68,13 +76,16 @@ function run_sim(args::Vector{String})
 
     # add model variables
     add_model_variables(model, config, data)
+
+    @info "Added variables to the model:" model
+
     # add model constraints
-    add_model_constraints(model, config, data)
+    #add_model_constraints(model, config, data)
     # add model objective function
-    add_model_objective(model, config, data)
+    #add_model_objective(model, config, data)
 
     # solve the model
-    JuMP.optimize!(model)
+    #JuMP.optimize!(model)
 
     # write output to file
     write_results(model, config, data, "ThisFileName")
@@ -86,14 +97,6 @@ function run_sim(args::Vector{String})
 end
 
 
-# Configuration
-abstract type AbstrConfiguration end
-struct SingleObjectiveBasicConfig <: AbstrConfiguration end
-struct SingleObjectiveMultiServiceConfig <: AbstrConfiguration end
-struct MultiObjectiveBasicConfig <: AbstrConfiguration end
-struct MultiObjectiveMultiServiceConfig <: AbstrConfiguration end
-
-
 # MODEL BUILDING
 function build_base_model(config::AbstrConfiguration, data::ModelData)::JuMP.Model
     model = JuMP.direct_model(CPLEX.Optimizer())
@@ -102,6 +105,7 @@ function build_base_model(config::AbstrConfiguration, data::ModelData)::JuMP.Mod
 end
 
 
+# TODO: make all functions consistend by adding ! where arguments are mutated
 # Objective creation
 function add_model_objective(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
     # TODO
