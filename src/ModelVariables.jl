@@ -334,10 +334,5 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
     # current subobjective (needed for pay-off table calculation)
     @variable(model, Zx)
 
-
-
-
-# TODO: add positive variables and bounds from GAMS
-
-    return
+    return nothing
 end
