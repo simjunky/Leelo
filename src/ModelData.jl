@@ -60,23 +60,23 @@ struct ModelData
 
     # Conventional generators
 
-    # Capital cost of power plant installation [k Dollar per installed MW]
-    costCapG::Array{Float64, 1}
+    # (g, y) Capital cost of power plant g's installation in year y [k Dollar per installed MW]
+    costCapG::Array{Float64, 2}
+    # TODO: should be k Dollar per produced MWh?
+    # (g, y) Variable operational cost of running power plant g in year y [Dollar per produced MWh]
+    costOperationVarG::Array{Float64, 2}
     # TODO: should be k Dollar per produced MWh
-    # Variable operational cost of running power plant [Dollar per produced MWh]
-    costOperationVarG::Array{Float64, 1}
-    # TODO: should be k Dollar per produced MWh
-    # Fix operational cost of running power plant [Dollar per installed MW]
-    costOperationFixG::Array{Float64, 1}
-    # Cost of Reserves [Dollar per needed MWh]
+    # (g, y) Fix operational cost of running power plant g in year y [Dollar per installed MW]
+    costOperationFixG::Array{Float64, 2}
+    # (g) Cost of Reserves for gernerator g [Dollar per needed MWh]
     costReserveG::Array{Float64, 1}
-    # Lifetime of the generator [year]
-    lifetimeG::Array{Int64, 1}
-    # Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of generator [unitless]
+    # (g, y) Lifetime of the generator g built in year y [years]
+    lifetimeG::Array{Int64, 2}
+    # (g) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost of generator g within its lifetime [unitless]
     annuityG::Array{Float64, 1}
-    # min bound: minimum capacity of to-be-installed conventional generation [MW]
+    # (g) min bound: minimum capacity of to-be-installed conventional generator g [MW]
     pMinG::Array{Float64, 1}
-    # max bound: maximum capacity of to-be-installed conventional generation [MW]
+    # (g) max bound: maximum capacity of to-be-installed conventional generator g [MW]
     pMaxG::Array{Float64, 1}
     # fraction ∈[0,1] of minimal energy production coming from fossil generation [unitless]
     minFossilGeneration::Float64
@@ -91,17 +91,16 @@ struct ModelData
     # TODO: Remove euro/check if Excel was wrong
     # costs of wear and tear in coal power plants due to ramping [Euro per MW]
     costWTCoal::Float64
-    # (b,g) busses b existing capacity of conventional generator g [MW]
-    pexistingG::Array{Float64, 2}
-    #pexistingG(b,g)       existing capacity of g (MW)
+    # (b, g, y) busses b existing capacity of conventional generator g in year y [MW]
+    pexistingG::Array{Float64, 3}
 
 
 
     # Renewable generators
 
-    # (r) Capital cost of renewable power plant installation [k Dollar per installed MW]
-    costCapR::Array{Float64, 1}
-    # (r) Variable operational cost of running power plant [k Dollar per produced MWh]
+    # (r, y) Capital cost of renewable power plant installation r in year y [k Dollar per installed MW]
+    costCapR::Array{Float64, 2}
+    # (r, y) Variable operational cost of running power plant [k Dollar per produced MWh]
     costOperationVarR::Array{Float64, 1}
     # (r) Fix operational cost of running renewable power plant [k Dollar per installed MW]
     costOperationFixR::Array{Float64, 1}
