@@ -11,71 +11,97 @@ function read_model_data()::ModelData
 
     @info "enter read_model_data()"
 
-    # filename of file containing parameters of conventional generators
-    conv_generator_parameter_file = folder * "conventional_generators.csv"
+    # filename of file containing scenario setting parameters
+    scenario_parameter_file = folder * "scenario_settings.xlsx"
 
     # create DataFrame containing data of conventional generators
-    conv_generator_data = CSV.read(conv_generator_parameter_file, DataFrame; delim = ',', header = 3, types = Dict(:generator_name=>String, :Tech=>String))
+    scenario_setting_data = DataFrame(XLSX.readtable(scenario_parameter_file, "Tabelle1", infer_eltypes = true)...)
 
-    @info "read conv gen data"
+
+
+
+
+    # filename of file containing parameters of conventional generators
+    conv_generator_parameter_file = folder * "conventional_generators.xlsx"
+
+    # create DataFrame containing data of conventional generators
+    conv_generator_data = DataFrame(XLSX.readtable(conv_generator_parameter_file, "Tabelle1", infer_eltypes = true)...)
+    #CSV.read(conv_generator_parameter_file, DataFrame; delim = ',', header = 3, types = Dict(:generator_name=>String, :Tech=>String))
+
+    @info "did read conv gen data"
 
     # filename of file containing parameters of renewable generators
-    ren_generator_parameter_file = folder * "renewable_generators.csv"
+    ren_generator_parameter_file = folder * "renewable_generators.xlsx"
 
     # create DataFrame containing data of renewable generators
-    ren_generator_data = CSV.read(ren_generator_parameter_file, DataFrame; delim = ',', header = 3, types = Dict(:generator_name=>String, :tech=>String))
+    ren_generator_data = DataFrame(XLSX.readtable(ren_generator_parameter_file, "Tabelle1", infer_eltypes = true)...)
+    #CSV.read(ren_generator_parameter_file, DataFrame; delim = ',', header = 3, types = Dict(:generator_name=>String, :tech=>String))
 
-    @info "read ren gen data"
+    @info "did read ren gen data"
 
     # filename of file containing parameters of conversion technologies
-    converter_parameter_file = folder * "conversion_technologies.csv"
+    converter_parameter_file = folder * "conversion_technologies.xlsx"
 
     # create DataFrame containing data of conversion technologies
-    converter_data = CSV.read(converter_parameter_file, DataFrame; delim = ',', header = 4, types = Dict(:converter_name=>String, :CT=>String, :input=>String, :output=>String))
+    converter_data = DataFrame(XLSX.readtable(converter_parameter_file, "Tabelle1", infer_eltypes = true)...)
+    #CSV.read(converter_parameter_file, DataFrame; delim = ',', header = 4, types = Dict(:converter_name=>String, :CT=>String, :input=>String, :output=>String))
 
-    @info "read converter data"
+    @info "did read converter data"
 
     # filename of file containing parameters of storage technologies
-    storage_parameter_file = folder * "storage_technologies.csv"
+    storage_parameter_file = folder * "storage_technologies.xlsx"
 
     # create DataFrame containing data of conversion technologies
-    storage_data = CSV.read(storage_parameter_file, DataFrame; delim = ',', header = 3, types = Dict(:Storage_Technology=>String, :VectorST=>String, :Units_of_installed_capacity=>String))
+    storage_data = DataFrame(XLSX.readtable(storage_parameter_file, "Tabelle1", infer_eltypes = true)...)
+    #CSV.read(storage_parameter_file, DataFrame; delim = ',', header = 3, types = Dict(:Storage_Technology=>String, :VectorST=>String, :Units_of_installed_capacity=>String))
 
-    @info "read storage data"
+    @info "did read storage data"
 
     # filename of file containing parameters of transmission lines
-    transmission_parameter_file = folder * "transmission_lines.csv"
+    transmission_parameter_file = folder * "transmission_lines.xlsx"
 
     # create DataFrame containing data of transmission lines
-    transmission_data = CSV.read(transmission_parameter_file, DataFrame; delim = ',', header = 2, types = Dict(:line_name=>String, :BarO=>String, :BarD=>String))
+    transmission_data = DataFrame(XLSX.readtable(transmission_parameter_file, "Tabelle1", infer_eltypes = true)...)
+    #CSV.read(transmission_parameter_file, DataFrame; delim = ',', header = 2, types = Dict(:line_name=>String, :BarO=>String, :BarD=>String))
 
-    @info "read transm data"
+    @info "did read transm data"
 
     # filename of file containing electricity demand profiles
-    demand_profile_file = folder * "demand_profiles.csv"
+    demand_profile_file = folder * "demand_profiles.xlsx"
 
     # create DataFrame containing demand profiles data
-    demand_profile_data = CSV.read(demand_profile_file, DataFrame; delim = ',', header = 1, types = Dict(:timestep_name=>String))
+    demand_profile_data = DataFrame(XLSX.readtable(demand_profile_file, "Tabelle1", infer_eltypes = true)...)
+    #CSV.read(demand_profile_file, DataFrame; delim = ',', header = 1, types = Dict(:timestep_name=>String))
 
-    @info "read demand data"
+    @info "did read demand data"
 
     # filename of file containing data of hydropower cascades
-    hydro_cascades_file = folder * "hydro_cascades.csv"
+    hydro_cascades_file = folder * "hydro_cascades.xlsx"
 
     # create DataFrame containing data of hydropower cascades
-    hydro_cascades_data = CSV.read(hydro_cascades_file, DataFrame; delim = ',', header = 1, types = Dict(:BusH=>String, :Code=>String, :hydro_name=>String, :Type=>String, :TurbinedGoesTo=>String, :EcoflowGoesTo=>String, :PumpedGoesTo=>String))
+    hydro_cascades_data = DataFrame(XLSX.readtable(hydro_cascades_file, "Tabelle1", infer_eltypes = true)...)
+    #CSV.read(hydro_cascades_file, DataFrame; delim = ',', header = 1, types = Dict(:BusH=>String, :Code=>String, :hydro_name=>String, :Type=>String, :TurbinedGoesTo=>String, :EcoflowGoesTo=>String, :PumpedGoesTo=>String))
 
-    @info "read hydro data"
+    @info "did read hydro data"
 
     # filename of file containing data of run of river generators
-    hydro_ROR_file = folder * "hydro_run_of_river.csv"
+    hydro_ROR_file = folder * "hydro_run_of_river.xlsx"
 
     # create DataFrame containing data of run of river generators
-    hydro_ROR_data = CSV.read(hydro_ROR_file, DataFrame; delim = ',', header = 1, types = Dict(:ror_name=>String, :BusRoR=>String))
+    hydro_ROR_data = DataFrame(XLSX.readtable(hydro_ROR_file, "Tabelle1", infer_eltypes = true)...)
+    #CSV.read(hydro_ROR_file, DataFrame; delim = ',', header = 1, types = Dict(:ror_name=>String, :BusRoR=>String))
 
-    @info "read ROR data"
+    @info "did read ROR data"
 
-    #=
+
+    #= TODO: red in the following data:
+    renewable_profiles.xlsx
+    preexisting_capacities.xlsx
+    hydro_run_of_river_profiles.xlsx
+    scenario_settings.xlsx (so far empty)
+    =#
+
+    #= TODO: adapt this to new XLSX inputs...
     @show ren_generator_data
     n_buses = 4
     m_pexistingR = zeros(Float64, nrow(ren_generator_data), n_buses)
@@ -85,8 +111,21 @@ function read_model_data()::ModelData
         m_pexistingR[:,i] = ren_generator_data[!, Symbol("pexistingRb$(i)")]
     end
     @show m_pexistingR
+
+    n_buses = 4 # TODO: change it to get read from inputs
+    my_pexistingG = zeros(Float64, nrow(conv_generator_data), n_buses)
+    @show typeof(my_pexistingG)
+    @show my_pexistingG
+    for i in 1:n_buses
+        my_pexistingG[:,i] = conv_generator_data[!, Symbol("pexistingGb$(i)")]
+    end
+    @show my_pexistingG
     =#
 
+
+    @info "Showing: Data Frames:"
+
+    @show describe(scenario_setting_data)
     @show describe(conv_generator_data)
     @show describe(ren_generator_data)
     @show describe(converter_data)
@@ -96,51 +135,63 @@ function read_model_data()::ModelData
     @show describe(hydro_cascades_data)
     @show describe(hydro_ROR_data)
 
-    @show typeof(hydro_cascades_data[!, :hydro_name])
-    @show hydro_cascades_data[!, :hydro_name]
+    # read neccessairy indexes to assemble matrices
+    n_buses = scenario_setting_data[1, :n_buses]
 
+    n_years = scenario_setting_data[1, :n_years]
+    starting_year = scenario_setting_data[1, :starting_year]
+    year_timestep = scenario_setting_data[1, :year_timestep]
+    years = collect(starting_year:year_timestep:(starting_year + nyears * year_timestep))
+
+    n_conv_generators = nrow(conv_generator_data)
+
+    my_costCapG[:,i] = Matrix{Float64}(conv_generator_data[!,Symbol.("costCapGy".*string.(years))])
 
 
 
     # TODO: keep replacing placeholder-zeros with real values
 
-    model_data = ModelData(interest_rate = 0.0, # TODO
-                        dt = 0.0, # TODO
-                        nt = 0, # TODO
-                        modelType = "0", # TODO
-                        scenario = "0", # TODO
-                        curyear = 0, # TODO
+    model_data = ModelData(interest_rate =  scenario_setting_data[1, :interest_rate],
+                        dt = Float64(scenario_setting_data[1, :timestep_length]),
+                        nt =  scenario_setting_data[1, :n_timesteps],
+                        modelType =  scenario_setting_data[1, :model_type],
+                        scenario = scenario_setting_data[1, :scenario_type],
+                        curyear =  scenario_setting_data[1, :starting_year],
                         g_conventional_generator_names = conv_generator_data[!, :generator_name],
                         r_renewable_generator_names = ren_generator_data[!, :generator_name],
-                        ct_conversion_technologies_names = converter_data[!, :converter_name],
-                        st_storage_technologies_names = storage_data[!, :Storage_Technology],
-                        b_busses_names = ["0"], # TODO: get names maybe from demand profiles data?
+                        ct_conversion_technologies_names = converter_data[!, :technology_name],
+                        st_storage_technologies_names = storage_data[!, :storage_technology],
+                        b_busses_names = "b".*string.(collect(1:scenario_setting_data[1, :n_buses])),
                         l_transmission_lines_names = transmission_data[!, :line_name],
-                        t_hourly_timesteps_names = demand_profile_data[!, :timestep_name],
-                        h_hydro_power_generators_names = hydro_cascades_data[!, :hydro_name],
+                        t_hourly_timesteps_names = "t".*string.(collect(1:scenario_setting_data[1, :n_timesteps])),
+                        h_hydro_power_generators_names = hydro_cascades_data[!, :generator_name],
                         ror_run_of_river_generators_names = hydro_ROR_data[!, :ror_name],
-                        ic_impact_categories_names = ["0"],
-                        costCapG = [0.0],
-                        costOperationVarG = [0.0],
-                        costOperationFixG = [0.0],
-                        costReserveG = [0.0],
-                        lifetimeG = [0],
-                        annuityG = [0.0],
-                        pMinG = [0.0],
-                        pMaxG = [0.0],
-                        minFossilGeneration = 0.0,
-                        maxFossilGeneration = 0.0,
-                        costRampsCoal_hourly = 0.0,
-                        costRampsCoal_daily = 0.0,
-                        costWTCoal = 0.0,
-                        pexistingG = [0.0 0.0; 0.0 0.0],
-                        costCapR = [0.0],
-                        costOperationVarR = [0.0],
-                        costOperationFixR = [0.0],
-                        lifetimeR = [0],
-                        annuityR = [0.0],
-                        technologyR = ["0"],
-                        profilesR= zeros(Float64, (1,1,1)),
+                        ic_impact_categories_names = ["0"], # TODO
+                        costCapG = Matrix{Float64}(conv_generator_data[!,Symbol.("costCapGy".*string.(years))]),
+
+
+
+
+                        costOperationVarG = conv_generator_data[!, :CostOperationVarG],
+                        costOperationFixG = conv_generator_data[!, :CostOperationFixG],
+                        costReserveG = conv_generator_data[!, :CostReserveG],
+                        lifetimeG = conv_generator_data[!, :Lifetime],
+                        annuityG = conv_generator_data[!, :AnnuityG],
+                        pMinG = conv_generator_data[!, :PMinG],
+                        pMaxG = conv_generator_data[!, :PMaxG],
+                        minFossilGeneration = 0.0, # TODO
+                        maxFossilGeneration = 0.0, # TODO
+                        costRampsCoal_hourly = 0.0, # TODO
+                        costRampsCoal_daily = 0.0, # TODO
+                        costWTCoal = 0.0, # TODO
+                        pexistingG = my_pexistingG,
+                        costCapR = ren_generator_data[!, :CostCapR],
+                        costOperationVarR = ren_generator_data[!, :CostOperationVarR],
+                        costOperationFixR = ren_generator_data[!, :CostOperationFixR],
+                        lifetimeR = ren_generator_data[!, :Lifetime],
+                        annuityR = ren_generator_data[!, :AnnuityR],
+                        technologyR = ren_generator_data[!, :tech],
+                        profilesR= zeros(Float64, (1,1,1)), # TODO
                         minCapacityPotR = [0.0 0.0; 0.0 0.0],
                         maxCapacityPotR = [0.0 0.0; 0.0 0.0],
                         pexistingR = [0.0 0.0; 0.0 0.0],
@@ -255,5 +306,4 @@ function read_model_data()::ModelData
 
     return model_data
 
-    #return ModelData()
 end

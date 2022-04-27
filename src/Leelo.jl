@@ -6,7 +6,8 @@ using JuMP
 import CPLEX
 
 # TODO: change using statements to import statements and use dot notation to keep namespace clean
-using CSV # used by DataInput.jl
+#using CSV #not used anymore
+import XLSX # used by DataInput.jl
 using DataFrames # used by DataInput.jl
 
 
