@@ -100,12 +100,12 @@ struct ModelData
 
     # (r, y) Capital cost of renewable power plant installation r in year y [k Dollar per installed MW]
     costCapR::Array{Float64, 2}
-    # (r, y) Variable operational cost of running power plant [k Dollar per produced MWh]
-    costOperationVarR::Array{Float64, 1}
-    # (r) Fix operational cost of running renewable power plant [k Dollar per installed MW]
-    costOperationFixR::Array{Float64, 1}
-    # (r) Lifetime of the renewable generator [year]
-    lifetimeR::Array{Int64, 1}
+    # (r, y) Variable operational cost of running power plant r in year y [k Dollar per produced MWh]
+    costOperationVarR::Array{Float64, 2}
+    # (r, y) Fix operational cost of running renewable power plant r in year y [k Dollar per installed MW]
+    costOperationFixR::Array{Float64, 2}
+    # (r, y) Lifetime of the renewable generator r built in year y [year]
+    lifetimeR::Array{Int64, 2}
     # (r) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of renewable generator [unitless]
     annuityR::Array{Float64, 1}
     # (r) type of renewable generation ∈[Wind, SolarPV, RoR, Geothermal, Biomass, Biogas]
@@ -126,27 +126,27 @@ struct ModelData
     # Conversion technologies
 
     # TODO: should be Dollars instead of Euros
-    # (ct) Capital cost of conversion technology installation [k Euros per installed MW]
-    costCapCT::Array{Float64, 1}
+    # (ct, y) Capital cost of conversion technology installation ct in year y [k Euros per installed MW]
+    costCapCT::Array{Float64, 2}
     # TODO: should be Dollars instead of Euros
-    # (ct) Fix operational cost of conversion technology [k Euros per installed MW]
-    costOperationFixCT::Array{Float64, 1}
+    # (ct, y) Fix operational cost of conversion technology ct inyear y [k Euros per installed MW]
+    costOperationFixCT::Array{Float64, 2}
     # TODO: GAMS Comment: operation cost of conversion per unit installed (k€\unit installed) => should be dependent on use as in adapted comment
     # TODO: should be Dollars instead of Euros
-    # (ct) Variable operational cost of conversion technology [k Euro per converted MWh]
-    costOperationConvCT::Array{Float64, 1}
-    # (ct) Lifetime of the conversion technology [year]
-    lifetimeCT::Array{Int64, 1}
-    # (ct) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of conversion technology [unitless]
+    # (ct, y) Variable operational cost of conversion technology ct in year y [k Euro per converted MWh]
+    costOperationConvCT::Array{Float64, 2}
+    # (ct, y) Lifetime of the conversion technology ct built in year y [years]
+    lifetimeCT::Array{Int64, 2}
+    # (ct) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of conversion technology ct [unitless]
     annuityCT::Array{Float64, 1}
     # TODO: capacity, Power or energy reserves?  GAMS comment: cost of reserves ($\MW)or ($\MWh)
-    # (ct) cost of conversion technology capacity reserves [Dollar per MW]
+    # (ct) cost of conversion technology ct's capacity reserves [Dollar per MW]
     costReserveCT::Array{Float64, 1}
-    # (ct) energy conversion factor of conversion technology ct (equivalence of converted energy form to input energy form) [unitless]
-    conversionFactorCT::Array{Float64, 1}
+    # (ct, y) energy conversion factor of conversion technology ct in year y (equivalence of converted energy form to input energy form) [unitless]
+    conversionFactorCT::Array{Float64, 2}
     #TODO: what is this exactly? GAMS dos not have comment on it
-    # (ct) ??
-    etaconv::Array{Float64, 1}
+    # (ct, y) the conversion efficiency of the conversion technology ct for the year y [unitless] #TODO: remove: used to be called etaconv
+    conversionEfficiencyCT::Array{Float64, 2}
     # (b,ct) minimum capacity of conversion technology ct to be installed in bus b [MW]
     minCapacityPotCT::Array{Float64, 2}
     # (b,ct) minimum capacity of conversion technology ct to be installed in bus b [MW]
@@ -167,17 +167,17 @@ struct ModelData
     # Storage technologies
     # TODO: many definitions use MWh... which would be ok for capacity of storage... recheck to unify.
 
-    # (st) Capital cost of storage technology installation [k Dollar per installed MW]
-    costCapST::Array{Float64, 1}
+    # (st, y) Capital cost of storage technology st's installation in year y [k Dollar per installed MW]
+    costCapST::Array{Float64, 2}
     # TODO: GAMS: fixed op cost of st per vol (€\MWh_ins); but shouldnt be singel EUros, EUROs nor INSTALLED MWh
-    # (st) Variable operational cost of storage technology [k Dollar per stored MWh]
+    # (st, y) Variable operational cost of storage technology st for year y [k Dollar per stored MWh]
     # TODO: is stored the correct term above?
-    costOperationVarST::Array{Float64, 1}
+    costOperationVarST::Array{Float64, 2}
     # TODO: GAMS said: fixed op cost of st per vol (k€\MWh_ins); but it should neither be EUROs nor MWH!
-    # (st) Fix operational cost of running storage technology [k Dollar per installed MW]
-    costOperationFixST::Array{Float64, 1}
-    # (st) Lifetime of the conversion technology [year]
-    lifetimeST::Array{Int64, 1}
+    # (st, y) Fix operational cost of running storage technology st in year y [k Dollar per installed MW]
+    costOperationFixST::Array{Float64, 2}
+    # (st) Lifetime of the conversion technology st built in year y [years]
+    lifetimeST::Array{Int64, 2}
     # (st) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of storage technology [unitless]
     annuityST::Array{Float64, 1}
     # TODO: GAMS: (% of GWh_ins); but why Giga here when everything else is in MWh?? aso is it really in % or just factor??
@@ -232,8 +232,8 @@ struct ModelData
     busH::Array{String, 1}
     # (h)  Investment cost of upgrading Hydropower(kEuros\MW)
     costCapUpgradeH::Array{Float64, 1}
-    # (h)             existing capacities of h(MW)
-    pexistingH::Array{Float64, 1}
+    # (h, y) existing capacities of hydropower cascade h in year y [MW]
+    pexistingH::Array{Float64, 2}
     # TODO: how can the following three references be modeled??
     # (h) what h is downstream of current hh (via turbines)
     turbinedGoesTo::Array{String, 1}
@@ -273,8 +273,8 @@ struct ModelData
     barD::Array{String, 1}
     # (l)            losses of line l (%\MW)
     lossesL::Array{Float64, 1}
-    # (l)          existing line capacity in MW
-    capLExisting::Array{Float64, 1}
+    # (l, y) existing line l's capacity in the year y [MW]
+    capLExisting::Array{Float64, 2}
     # (l)           capital cost of line l (k€\MW)
     costCapL::Array{Float64, 1}
     # (l)  fixed operating costs of line l (k€\MW)
@@ -416,9 +416,9 @@ struct ModelData
                         h_hydro_power_generators_names::Array{String, 1} = ["0.0"],
                         ror_run_of_river_generators_names::Array{String, 1} = ["0.0"],
                         ic_impact_categories_names::Array{String, 1} = ["0.0"],
-                        costCapG::Array{Float64, 1} = [0.0],
-                        costOperationVarG::Array{Float64, 1} = [0.0],
-                        costOperationFixG::Array{Float64, 1} = [0.0],
+                        costCapG::Array{Float64, 1} = [0.0 0.0; 0.0 0.0],
+                        costOperationVarG::Array{Float64, 1} = [0.0 0.0; 0.0 0.0],
+                        costOperationFixG::Array{Float64, 1} = [0.0 0.0; 0.0 0.0],
                         costReserveG::Array{Float64, 1} = [0.0],
                         lifetimeG::Array{Int64, 1} = [0],
                         annuityG::Array{Float64, 1} = [0.0],
@@ -448,7 +448,7 @@ struct ModelData
                         annuityCT::Array{Float64, 1} = [0.0],
                         costReserveCT::Array{Float64, 1} = [0.0],
                         conversionFactorCT::Array{Float64, 1} = [0.0],
-                        etaconv::Array{Float64, 1} = [0.0],
+                        conversionEfficiencyCT::Array{Float64, 1} = [0.0],
                         minCapacityPotCT::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         maxCapacityPotCT::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         pexistingCT::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
@@ -606,7 +606,7 @@ struct ModelData
                     annuityCT,
                     costReserveCT,
                     conversionFactorCT,
-                    etaconv,
+                    conversionEfficiencyCT,
                     minCapacityPotCT,
                     maxCapacityPotCT,
                     pexistingCT,
