@@ -11,6 +11,7 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
     @info "add_model_variables() called"
 
 
+    # determine number of generators, buses, technologies etc. to later set variable sizes and domains and index them.
     n_timesteps = length(data.t_hourly_timesteps_names)
     n_buses = length(data.b_busses_names)
     n_conv_generators = length(data.g_conventional_generator_names)
@@ -55,7 +56,7 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
     # (t,b) power spilled at bus b during timestep t
     @variable(model, powerspilled[1:n_timesteps, 1:n_buses] >= 0)
 
-    # TODO: is this needed?
+    # TODO: is this really needed? (only imported from GAMS)
     # total generated power (aux counter)
     @variable(model, TotalGeneratedPower)
 
