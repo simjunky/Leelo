@@ -714,5 +714,5 @@ end
 # add custom printing to our struct:
 function Base.show(io::IO, data::ModelData)
     # TODO: either remove this function or fill it with usefull output!
-    println(io, "Model Data consisting of: Do something with params??")
+    println(io, "Attempt to print Model Data. Meaningfull information TBD...")
 end

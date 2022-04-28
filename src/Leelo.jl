@@ -75,13 +75,13 @@ function run_sim(args::Vector{String})
     # Build model depending on config and data
     model = build_base_model(config, data)
 
-    # add model variables
+    # add model variables and trivial bounds
     add_model_variables(model, config, data)
 
     @info "Added variables to the model:" model
 
-    # add model constraints
-    #add_model_constraints(model, config, data)
+    # add model constraints and equations
+    add_model_constraints(model, config, data)
     # add model objective function
     #add_model_objective(model, config, data)
 
