@@ -26,10 +26,33 @@ struct ModelData
     AverageDemand::Float64
     # required hours of autonomy [h]; GAMS: AutonomyHours= (AutonomyDays*24)
     AutonomyHours::Float64
-    # Average energy needed for autonomy requrements [MWh]; GAMS: Autonomy=AutonomyHours*AverageDemand
+    # average energy needed for autonomy requrements [MWh]; GAMS: Autonomy=AutonomyHours*AverageDemand
     Autonomy::Float64
     # fraction of a year which is simulated [unitless]; GAMS: FractionOfYear= dt*nt/8760
     FractionOfYear::Float64
+
+
+
+    # Size of the model
+
+    # number of zones to be modeled, reffered to as busses [unitless]
+    n_buses::Int64
+    # number of different conventional generators (i.e. fossil-fuel-based) [unitless]
+    n_conv_generators::Int64
+    # number of different hydro power plants [unitless]
+    n_hydro_generators::Int64
+    # number of different hydro power plants running off of rivers [unitless]
+    n_ror_generators::Int64
+    # number of energy conversion technologies [unitless]
+    n_conversion_technologies::Int64
+    # number of different renewable power generators [unitless]
+    n_ren_generators::Int64
+    # number of transmission lines connecting the zones (busses) [unitless]
+    n_lines::Int64
+    # number of different energy storage technologies [unitless]
+    n_storage_technologies::Int64
+    # number of impact categories [unitless]
+    n_impact_categories::Int64
 
 
 
@@ -116,7 +139,7 @@ struct ModelData
     minCapacityPotR::Array{Float64, 2}
     # (b,r) maximum capacity of renewable generators g to be installed in bus b [MW]
     maxCapacityPotR::Array{Float64, 2}
-    # (b,r) existing power capacity of renewable generator r in bus b [MW]
+    # (b, r, y) existing power capacity of renewable generator r in bus b in year y [MW]
     pexistingR::Array{Float64, 3}
     # (b,r) capacities of renewable generator g in bus b phased out from previous benchmark year to current year [MW]
     pRpho::Array{Float64, 2}
@@ -151,7 +174,7 @@ struct ModelData
     minCapacityPotCT::Array{Float64, 2}
     # (b,ct) minimum capacity of conversion technology ct to be installed in bus b [MW]
     maxCapacityPotCT::Array{Float64, 2}
-    # (b,ct) existing power capacity of conversion technology ct in bus b [MW]
+    # (b, ct, y) existing power capacity of conversion technology ct in bus b [MW]
     pexistingCT::Array{Float64, 3}
     # (b,ct) capacities of conversion technology ct in bus b phased out from previous benchmark year to current year [MW]
     pCTpho::Array{Float64, 2}
@@ -199,7 +222,7 @@ struct ModelData
     # (st) maximum charge & discharge cycles of storage technology st during its lifetime [unitless]
     cyclesST::Array{Int64, 1}
     # TODO: was called pexistingCT for all other generators/conversion-tech
-    # (b,st) existing storage capacity of storage technology st in bus b [MW]
+    # (b, st, y) existing storage capacity of storage technology st in bus b for year y [MW]
     vExistingST::Array{Float64, 3}
     # (st) identifiers for energy entity stored in storage technology st
     storageEntityST::Array{String, 1}
@@ -549,9 +572,22 @@ struct ModelData
                         Objcount::String = "0.0"
                         )
 
+
         tot_dem = sum(demand) * dt # TODO: this needs to be adapted to the current year
         av_dem = tot_dem / nt
         aut_h = autonomyDays * 24
+
+
+        n_buses = length(b_busses_names)
+        n_conv_generators = length(g_conventional_generator_names)
+        n_hydro_generators = length(h_hydro_power_generators_names)
+        n_ror_generators = length(ror_run_of_river_generators_names)
+        n_conversion_technologies = length(ct_conversion_technologies_names)
+        n_ren_generators = length(r_renewable_generator_names)
+        n_lines = length(l_transmission_lines_names)
+        n_storage_technologies = length(st_storage_technologies_names)
+        n_impact_categories = length(ic_impact_categories_names)
+
 
         return new( interest_rate,
                     dt,
@@ -563,7 +599,7 @@ struct ModelData
                     av_dem,
                     aut_h,
                     aut_h * av_dem,
-                    dt * nt / 8760,
+                    dt * nt / 8760, length(b_busses_names), length(g_conventional_generator_names), length(h_hydro_power_generators_names), length(ror_run_of_river_generators_names), length(ct_conversion_technologies_names), length(r_renewable_generator_names), length(l_transmission_lines_names), length(st_storage_technologies_names), length(ic_impact_categories_names),
                     g_conventional_generator_names,
                     r_renewable_generator_names,
                     ct_conversion_technologies_names,
