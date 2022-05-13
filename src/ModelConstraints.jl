@@ -13,12 +13,10 @@ function add_model_constraints(model::JuMP.Model, config::AbstrConfiguration, da
 
     #TODO:
     i_current_year #index of current year
-    n_timesteps
-    n_buses
-    n_ren_generators
-    n_conv_generators
-    n_storage_technologies
-    n_lines
+
+    #TODO: all other indices should be called using "data." e.g. data.n_buses
+
+
 
     # Constraints on the Objective function.
 
@@ -43,20 +41,53 @@ function add_model_constraints(model::JuMP.Model, config::AbstrConfiguration, da
     # Calculated by multiplying the operational expenses of a power line by its transported power in both directions within a timestep times the duration of the timestep.
     @constraint(model, eOperationCostL, OCl == sum((data.CostOperationVarL[l] * (powerLpos[t, l] + powerLneg[t, l]) * data.dt) for t in 1:n_timesteps, l in 1:n_lines))
 
-#=
+
     # other yearly operational costs
-    # Calculated by multiplying the operational expenses of a power line by its transported power in both directions within a timestep times the duration of the timestep.
-    @constraint(model, eOperationCostO, OCo == sum((data.CostOperationVarL[l] * (powerLpos[t, l] + powerLneg[t, l]) * data.dt) for t in 1:n_timesteps, l in 1:n_lines))
+    # Calculated as the sum of different penalty costs. Those are the costs of unserved power and spilled power, as well as ficticious power flows. Additionally it contais the coal power ramping penalties.
+    # TODO: why is qfictitious not multiplied by data.dt as the rest??
+    @constraint(model, eOperationCostO, OCo == sum((data.costUnserved * powerunserved[t, b] * data.dt) for t in 1:n_timesteps, b in 1:n_buses) + sum((data.costSpilled * powerspilled[t, b] * data.dt) for t in 1:n_timesteps, b in 1:n_buses) + sum((data.costFictitiousFlows * qfictitious[t, h]) for t in 1:n_timesteps, h in 1:data.n_hydro_generators) )
 
-.. OCo =e= sum((t,b),CostUnserved*powerunserved(t,b)*dt) +  sum((t,b),CostSpilled*powerspilled(t,b)*dt) + sum((t,h),CostFictitiousFlows*qfictitious(t,h)) + sum((t,b),CostRampsCoal_hourly*(rampsAuxCoal1(t,b)+rampsAuxCoal2(t,b))) +  sum((t,b),CostRampsCoal_daily*(rampsAuxCoal3(t,b)+rampsAuxCoal4(t,b))) +  sum((t,b),CostWTCoal*(rampsAuxCoal1(t,b)+rampsAuxCoal2(t,b)+ rampsAuxCoal3(t,b)+rampsAuxCoal4(t,b)))
+    # TODO: add the coal ramping things to the constraint above!
+    # OCo =e= sum((t,b),CostUnserved*powerunserved(t,b)*dt) +  sum((t,b),CostSpilled*powerspilled(t,b)*dt) + sum((t,h),CostFictitiousFlows*qfictitious(t,h)) + sum((t,b),CostRampsCoal_hourly*(rampsAuxCoal1(t,b)+rampsAuxCoal2(t,b))) +  sum((t,b),CostRampsCoal_daily*(rampsAuxCoal3(t,b)+rampsAuxCoal4(t,b))) +  sum((t,b),CostWTCoal*(rampsAuxCoal1(t,b)+rampsAuxCoal2(t,b)+ rampsAuxCoal3(t,b)+rampsAuxCoal4(t,b)))
 
-=#
 
+    # yearly fixed operational costs of storage
+    # in k€
+    # TODO: probably in k$ and not €... ?
+    # Calculated as the sum of the yearly fixed operating costs of storages and conversion technologies, which depend on the preexisting and newly installed capacities.
+    @constraint(model, eOperationCostFixedS, OCfs == sum((data.costOperationFixST[st, i_current_year] * (1000 * eST[b, st] + data.vExistingST[b, st, i_current_year])) for b in 1:data.n_buses, st in 1:data.n_storage_technologies) + sum((data.costOperationFixCT[ct, i_current_year] * (1000 * pCT[b, ct] + data.pexistingCT[b, st, i_current_year])) for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) )
+
+
+    # yearly fixed operational costs of conventional, renewable, hydro and run-of-river power generation and transmission lines
+    # in k€
+    # TODO: probably in k$ and not €... ?
+    # Calculated as the sum of the yearly fixed operating costs of storages and conversion technologies, which depend on the preexisting and newly installed capacities.
+    @constraint(model, eOperationCostFixedS, OCfs == sum((data.costOperationFixG[g, i_current_year] * (1000 * pG[b, g] + data.pexistingG[b, st, i_current_year])) for b in 1:data.n_buses, g in 1:data.n_conv_generators) + sum((data.costOperationFixR[r, i_current_year] * (1000 * pR[b, r] + data.pexistingR[b, r, i_current_year])) for b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum((data.costOperationFixH[h] * (1000 * pH[h] + data.pexistingH[h, i_current_year])) for h in 1:data.n_hydro_generators) + sum((data.costOperationFixRoR[ror] * data.pMaxRoR[ror]) for ror in 1:data.n_ror_generators) + sum((data.costOperationFixL[l] * (1000 * pL[l] + data.capLExisting[l, i_current_year])) for l in 1:data.n_lines) )
+
+
+    # yearly total operational costs
+    # in Dollar
+    # Calculated as the sum of all precalculated operational costs
+    @constraint(model, eOperationCostT, OCfs == OCr + OCg + OCs + OCl + OCo + (1000 * OCfo) + (OCfs * 1000) )
+
+
+    # yearly investment into renewable power generation
+    # Calculated multiplying the interest dependent annuity factor with the capital cost of renewable generators times the newly built capacity (scaled to MW)
+    @constraint(model, eInvestmentCostR, ICr == sum((data.annuityR[r] * costCapR[r, i_current_year] * 1000 * pR[b, r]) for b in 1:data.n_buses, r in 1:data.n_ren_generators) )
+
+
+
+
+
+    eInvestmentCostG               .. ICg =e= sum((b,g),AnnuityG(g)*CostCapG(g)*1000*pG(b,g));
+    eInvestmentCostS               .. ICs =e= sum((b,st),AnnuityST(st)*CostCapST(st)*1000*eST(b,st))+ sum((b,ct),AnnuityCT(ct)*CostCapCT(ct)*1000*pCT(b,ct));
+    eInvestmentCostL               .. ICl =e= sum((l),AnnuityL(l)*CostCapL(l)*1000*pL(l));
+    eInvestmentCostH               .. ICh =e= sum(h,CostCapUpgradeH(h)*1000*pH(h));
+    eInvestmentCostO               .. ICo =e= 0;
+    eInvestmentCostT               .. ICt =e= FractionOfYear*1000*(ICr+ICg+ICs+ICl+ICo+ICh);
 
 #=
-eOperationCostT                operational cost total
-eOperationCostFixedO           fixed operational costs of all generation\renewable techs
-eOperationCostFixedS           fixed operational costs of storage
+
 
 eInvestmentCostR               investment cost renewables
 eInvestmentCostG               investment cost generators
