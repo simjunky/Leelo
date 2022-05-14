@@ -147,7 +147,7 @@ function read_model_data()::ModelData
 
     model_data = ModelData(interest_rate =  scenario_setting_data[1, :interest_rate],
                         dt = Float64(scenario_setting_data[1, :timestep_length]),
-                        nt =  scenario_setting_data[1, :n_timesteps],
+                        n_timesteps =  scenario_setting_data[1, :n_timesteps],
                         modelType =  scenario_setting_data[1, :model_type],
                         scenario = scenario_setting_data[1, :scenario_type],
                         curyear =  scenario_setting_data[1, :starting_year],

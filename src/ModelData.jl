@@ -13,7 +13,7 @@ struct ModelData
     # duration of time step (hours)
     dt::Float64
     # amount of time steps
-    nt::Int64
+    n_timesteps::Int64
     # index for model to use
     modelType::String
     # index for current scenario
@@ -22,14 +22,14 @@ struct ModelData
     curyear::Int64
     # total demand [MWh]; GAMS: TotalDemand=sum((t,b),Demand(t,b))*dt
     TotalDemand::Float64
-    # average demand [MW]; GAMS: AverageDemand=TotalDemand/nt
+    # average demand [MW]; GAMS: AverageDemand=TotalDemand/n_timesteps
     AverageDemand::Float64
     # required hours of autonomy [h]; GAMS: AutonomyHours= (AutonomyDays*24)
     AutonomyHours::Float64
     # average energy needed for autonomy requrements [MWh]; GAMS: Autonomy=AutonomyHours*AverageDemand
     Autonomy::Float64
-    # fraction of a year which is simulated [unitless]; GAMS: FractionOfYear= dt*nt/8760
-    FractionOfYear::Float64
+    # fraction of a year which is simulated [unitless]; GAMS: fractionOfYear= dt*n_timesteps/8760
+    fractionOfYear::Float64
 
 
 
@@ -425,7 +425,7 @@ struct ModelData
 
     function ModelData(;interest_rate::Float64 = 0.0,
                         dt::Float64 = 0.0,
-                        nt::Int64 = 0,
+                        n_timesteps::Int64 = 0,
                         modelType::String = "0.0",
                         scenario::String = "0.0",
                         curyear::Int64 = 0,
@@ -574,7 +574,7 @@ struct ModelData
 
 
         tot_dem = sum(demand) * dt # TODO: this needs to be adapted to the current year
-        av_dem = tot_dem / nt
+        av_dem = tot_dem / n_timesteps
         aut_h = autonomyDays * 24
 
 
@@ -591,7 +591,7 @@ struct ModelData
 
         return new( interest_rate,
                     dt,
-                    nt,
+                    n_timesteps,
                     modelType,
                     scenario,
                     curyear,
@@ -599,7 +599,7 @@ struct ModelData
                     av_dem,
                     aut_h,
                     aut_h * av_dem,
-                    dt * nt / 8760, length(b_busses_names), length(g_conventional_generator_names), length(h_hydro_power_generators_names), length(ror_run_of_river_generators_names), length(ct_conversion_technologies_names), length(r_renewable_generator_names), length(l_transmission_lines_names), length(st_storage_technologies_names), length(ic_impact_categories_names),
+                    dt * n_timesteps / 8760, length(b_busses_names), length(g_conventional_generator_names), length(h_hydro_power_generators_names), length(ror_run_of_river_generators_names), length(ct_conversion_technologies_names), length(r_renewable_generator_names), length(l_transmission_lines_names), length(st_storage_technologies_names), length(ic_impact_categories_names),
                     g_conventional_generator_names,
                     r_renewable_generator_names,
                     ct_conversion_technologies_names,
