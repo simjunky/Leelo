@@ -169,11 +169,11 @@ function read_model_data()::ModelData
                         annuityG = [0.0], #TODO: remove  conv_generator_data[!, :AnnuityG],
                         pMinG = conv_generator_data[!, :PMinG],
                         pMaxG = conv_generator_data[!, :PMaxG],
-                        minFossilGeneration = 0.0, # TODO
-                        maxFossilGeneration = 0.0, # TODO
-                        costRampsCoal_hourly = 0.0, # TODO
-                        costRampsCoal_daily = 0.0, # TODO
-                        costWTCoal = 0.0, # TODO
+                        minFossilGeneration = scenario_setting_data[1, :MinFossilShare],
+                        maxFossilGeneration = scenario_setting_data[1, :MaxFossilShare],
+                        costRampsCoal_hourly = scenario_setting_data[1, :CoalRampingHourly],
+                        costRampsCoal_daily = scenario_setting_data[1, :CoalRampingDaily],
+                        costWTCoal =scenario_setting_data[1, :CoalRampingWearTear],
                         pexistingG = my_pexistingG,
                         costCapR = Matrix{Float64}(ren_generator_data[!,Symbol.("CostCapRy".*string.(years))]),
                         costOperationVarR = Matrix{Float64}(ren_generator_data[!,Symbol.("CostOperationVarRy".*string.(years))]),
