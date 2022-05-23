@@ -182,7 +182,7 @@ struct ModelData
     vectorCT_O::Array{String, 1}
     # (ct) Identifier for energy entity delivered by ct
     vectorCT_D::Array{String, 1}
-    # (t,b) CSP (Concentrated Solar Power) hourly (t) factor ∈[0,1] of generation profile in bus b [unitless]
+    # (t, b) CSP (Concentrated Solar Power) hourly (t) factor ∈[0,1] of generation profile in bus b [unitless]
     ProfilesCSP::Array{Float64, 2}
 
 
@@ -242,13 +242,13 @@ struct ModelData
     costReserveH::Array{Float64, 1}
     # (h) max power of h [MW]
     pMaxH::Array{Float64, 1}
-    # (h)        min power of h [MW]
+    # (h) min power of h [MW]
     pMinH::Array{Float64, 1}
-    # (h)        max volume of reservoir [m^3]
+    # (h) max volume of reservoir h [million m^3]
     vMaxH::Array{Float64, 1}
-    # (h)        min volume of reservoir [m^3]
+    # (h) min volume of reservoir h [million m^3]
     vMinH::Array{Float64, 1}
-    # (h)           yield water to power (m3\s to MW)
+    # (h) yield water to power [MW per m3/h]
     kH::Array{Float64, 1}
     # (h) bus to which h is connected
     # TODO: how can this info be stored best? number as index?? => check how it is done in GAMS.
@@ -264,11 +264,11 @@ struct ModelData
     divertedGoesTo::Array{String, 1}
     # (h) what h is downstream of current hh (via divertion)
     pumpedGoesTo::Array{String, 1}
-    # (h)  minimum spilled or ecological flow of h
+    # (h) minimum spilled or ecological flow of h
     qDivertedMinH::Array{Float64, 1}
     # (t,h)     inflows to h in time t
     qInflowH::Array{Float64, 2}
-    # (h)        evaporation or infiltration losses factor
+    # (h) evaporation or infiltration losses factor
     lossesH::Array{Float64, 1}
 
 
@@ -279,7 +279,7 @@ struct ModelData
     costOperationFixRoR::Array{Float64, 1}
     # (ror)       max installed capacity of ror (MW)
     pMaxRoR::Array{Float64, 1}
-    # (t,ror) ror profile profil
+    # (t, ror) ror profile
     profilesRoR::Array{Float64, 2}
     # (ror)        bus of ror
     busRoR::Array{Int64, 1}

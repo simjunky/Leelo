@@ -217,8 +217,146 @@ eRampsCoal4(t,b)                      ..rampsAuxCoal4(t,b) =l=PexistingG(b,'g1')
 
     # upper limit for generated renewable power
     # renewable power generation is limited by the existing and newly built capacity scaled by the generation profile, which dictates if the sun shines or wind blows.
-    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators], powerR[t, b, r] <= data.profilesR[t, b, r] * (1000 * pR[b, r] + data.pexistingR[b, r]) )
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators], powerR[t, b, r] <= data.profilesR[t, b, r] * (1000 * pR[b, r] + data.pexistingR[b, r, i_current_year]) )
 
+
+    # spilled renewable power
+    # the ammount of spilled renewable power is equal to the difference of the maximal possible renewable power generation acording tho the generation profile and the generated renewable power.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses], powerspilled[t, b] == sum(data.profilesR[t, b, r] * (1000 * pR[b, r] + data.pexistingR[b, r, i_current_year]) for r in 1:data.n_ren_generators) - sum(powerR[t, b, r] for r in 1:data.n_ren_generators) )
+
+
+    # upper limit for spilled renewable power
+    # the sum of spiled renewable power is limited by a faktor ∈[0,1] multiplied by the maximal possible renewable power generation.
+    @constraint(model, eEnergySpilledMax, sum(powerspilled[t, b] for t in 1:data.n_timesteps, b in 1:data.n_buses) <= data.energyCurtailedMax * sum(data.profilesR[t, b, r] * (1000 * pR[b, r] + data.pexistingR[b, r, i_current_year]) for t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators) )
+
+
+#=
+TODO: what the hell did this equation even do?
+eEqualInstallpR(b,r,rr)        .. pR(b,r)$(TechnologyR(r) eq TechnologyR(rr))=e= pR(b,rr)$(TechnologyR(r) eq TechnologyR(rr));
+=#
+
+
+    # limit CSP (concentrated solar power) power production
+    # the power produced by csp is limited by the generation profile (available sunshine) times the total installed capacity.
+    # Note: CSP is implemented as conversion technology rather than renewable due to its possibility to store energy as heat.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies; data.vectorCT_O[ct] == "sun"], powerCT[t, b, ct] <= data.ProfilesCSP[t, b] * (1000 * pCT[b, ct] + data.pexistingCT[b, ct, i_current_year]) )
+
+
+    # change in stored water for hydro generators
+    # change is calculated as difference dependent on all different in- and outflow sources.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators; t < data.n_timesteps], storedH[t + 1, h] - storedH[t, h] == -vLossH[t, h] + data.dt * 3600 * (data.qInflowH[t, h] - qturbined[t, h] - qpumped[t, h] - qdiverted[t, h] - qreserve[t, h] + qfictitious[t, h] + qdivertedupstream[t, h] + qturbinedupstream[t, h] + qpumpeddownstream[t, h]) )
+
+
+    # volume of water lost to evaporation or seepage
+    # the losses are calculated using the loss factor adjusted to 1 hour times the ammount of stored water.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators; t < data.n_timesteps], vLossH[t, h] == storedH[t, h] * data.lossesH[h] * data.dt / 24 )
+
+
+    # water storage constraint for annual transition
+    # the stores ammount at the end of the year should not be less than at the start.
+    # Note: this avoids complete depletion of al reservoirs to reduce power generation cost.
+    @constraint(model, [h in 1:data.n_hydro_generators], storedH[1, h] <= storedH[data.n_timesteps, h] )
+
+#=
+TODO: above constraint should replace these three:
+TODO: therefore the corresponding variables vIniH and vFinH should be removed.
+eVolumeIniFinH(h)              .. vFinH(h) =g= vIniH(h);
+eVolumeIniH(tfirst,h)          .. storedH(tfirst,h) =e= vIniH(h);
+eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
+=#
+
+
+    # upper limit for the ammount of stored water in a reservoir
+    # the parameter has to be adjusted from million m^3 to m^3
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], storedH[t, h] <= data.vMaxH[h] * 1000000 )
+
+
+    # lower limit for the ammount of stored water in a reservoir
+    # the parameter has to be adjusted from million m^3 to m^3
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], storedH[t, h] >= data.vMinH[h] * 1000000 )
+
+
+    # upper limit for the power production from hydro generators
+    # the generated power has to be less than the existing and newly built capacities combined.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], powerH[t, h] <= data.pexistingH[h, i_current_year] + 1000 * pH[h] )
+
+
+    # lower limit for the power production from hydro generators
+    # the generated power has to be greater than some given minimum.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], powerH[t, h] >= data.pMinH[h] )
+
+
+    # upper limit for the power needed to pump excess water or refill reservoirs
+    # the used power has to be less than the existing and newly built capacities combined.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], powerHpump[t, h] <= data.pexistingH[h, i_current_year] + 1000 * pH[h] )
+
+
+    # lower limit for the ammount of diverted water of a reservoir, often for ecological reasons
+    # limit given by parameter for each hydro generator
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], qdiverted[t, h] >= data.qDivertedMinH[h] )
+
+
+    # ammount of water diverted upstream ending in reservoir
+    # calculated by summing up the ammount of diverted water from each reservoir, where diverted water gets diverted to current reservoir.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], qdivertedupstream[t, h] == sum(qdiverted[t, other_h] for other_h in findall(==(data.h_hydro_power_generators_names[h]), data.divertedGoesTo)) )
+
+
+    # ammount of water turbined upstream ending in reservoir
+    # calculated by summing up the ammount of turbined water from each reservoir, where turbined water gets diverted to current reservoir.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], qturbinedupstream[t, h] == sum(qturbined[t, other_h] for other_h in findall(==(data.h_hydro_power_generators_names[h]), data.turbinedGoesTo)) )
+
+
+    # ammount of water pumped up from downstream ending in reservoir
+    # calculated by summing up the ammount of pumped water from each reservoir, where pumped water end up in current reservoir.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], qpumpeddownstream[t, h] == sum(qpumped[t, other_h] for other_h in findall(==(data.h_hydro_power_generators_names[h]), data.pumpedGoesTo)) )
+
+
+    # ammount of power produced by turbine
+    # calculated by scaling the ammount of turbined water with a hydro generator specific yield parameter.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], powerH[t, h] == data.kH[h] * qturbined[t, h] )
+
+
+    # ammount of power needed by turbine to pump
+    # calculated by scaling the ammount of pumped water with a reduced hydro generator specific yield parameter.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], powerHpump[t, h] == 0.9 * data.kH[h] * qpumped[t, h] )
+
+
+    # upper limit for power produced by run-of-river power plants
+    # calculated by scaling the installed capacity of RoR generators with their generation profile (modeling usable river flow).
+    @constraint(model, [t in 1:data.n_timesteps, ror in 1:data.n_ror_generators], powerRoR[t, ror] <= data.profilesRoR[t, ror] * data.pMaxRoR[ror] )
+
+
+    # upper limit for power produced by conversion technologies
+    # calculated adding existing and newly built capacities.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies], powerCT[t, b, ct] <= 1000 * pCT[b, ct] + data.pexistingCT[b, ct, i_current_year] )
+
+
+
+
+*our approach for powerCT: unit is MW if either VectorCT_O or VectorCT_D is electricity.If not, it is the entity VectorCT_D per unit time.
+
+*so, in the energy balance eqn, we separate the CT that DON'T have VectorCT_O as electricity while charging, they DO NOT need the CF.WHile Discharging, all need the CF,whether the VectorCT_D is electricity or not!
+
+*the following equation follows this and can replace the above two equations (CSP exception also taken care of!)
+
+eVolumeSTall(t,b,st)$(ord(t) le card(t)-1) .. storedST(t+1,b,st)    =e= storedST(t,b,st)-vLossST(t,b,st) + sum(ct$(VectorCT_D(ct) eq VectorST(st) AND VectorCT_O(ct) eq 1),CF(ct)* etaconv(ct)* powerCT(t,b,ct)*dt)+ sum(ct$(VectorCT_D(ct) eq VectorST(st) AND VectorCT_O(ct) ne 1),etaconv(ct)* powerCT(t,b,ct)*dt)- sum(ct$(VectorCT_O(ct) eq VectorST(st)), powerCT(t,b,ct)/(CF(ct)*etaconv(ct))*dt);
+
+eVolumeIniS(tfirst,b,st)               .. storedST(tfirst,b,st) =e= vIniST(b,st);
+
+eVolumeFinS(tlast,b,st)                .. storedST(tlast,b,st)  =e= vFinST(b,st);
+
+eVolumeIniFinS(b,st)$(ord(st) ne 7)    .. vFinST(b,st)          =e= vIniST(b,st);
+   // this constraint is not valid for CCS
+
+eVolLossS(t-1,b,st)                    .. vLossST(t,b,st)=e= storedST(t,b,st)*LossesST(st)/24*dt;
+
+eVolMaxST(t,b,st)$(ord(st) ne 7)       .. storedST(t,b,st) =l= eST(b,st)*1000+VexistingST(b,st);
+// st 7 is Carbon capture and storage tech . Here possible storage energy (Carbon) is limited to 20% of new investment (previous installed cap is full)
+eVolMaxCCS(t,b,st)$(ord(st) eq 7)      .. storedST(t,b,st) =l= (0.2)*1000*eST(b,st);
+
+eVolMinST(t,b,st)$(ord(st) ne 7)       .. storedST(t,b,st) =g= VMinST(st)*(eST(b,st)*1000+VexistingST(b,st));
+
+eVolMinCCS(t,b,st)$(ord(st) eq 7)       .. storedST(t,b,st) =g= VMinST(st)*(eST(b,st)*1000);
 
 #=
 

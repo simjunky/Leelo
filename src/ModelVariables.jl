@@ -44,7 +44,7 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
     # (t,ror) power delivered by river hydro power ror during timestep t
     @variable(model, powerRoR[1:n_timesteps, 1:n_ror_generators] >= 0)
 
-    # (t,b,ct) power delivered or consumed by conversion technology ct in bus b during timestep t
+    # (t,b,ct) power delivered or consumed by conversion technology ct in bus b during timestep t [MW (thermal)]
     @variable(model, powerCT[1:n_timesteps, 1:n_buses, 1:n_conversion_technologies] >= 0)
 
     # (t,b,r) power produced from renewables generator r in bus b during timestep t (equal to available profile)
