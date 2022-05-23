@@ -45,10 +45,7 @@ function add_model_constraints(model::JuMP.Model, config::AbstrConfiguration, da
     # other yearly operational costs
     # Calculated as the sum of different penalty costs. Those are the costs of unserved power and spilled power, as well as ficticious power flows. Additionally it contais the coal power ramping penalties.
     # TODO: why is qfictitious not multiplied by data.dt as the rest??
-    @constraint(model, eOperationCostO, OCo == sum((data.costUnserved * powerunserved[t, b] * data.dt) for t in 1:n_timesteps, b in 1:n_buses) + sum((data.costSpilled * powerspilled[t, b] * data.dt) for t in 1:n_timesteps, b in 1:n_buses) + sum((data.costFictitiousFlows * qfictitious[t, h]) for t in 1:n_timesteps, h in 1:data.n_hydro_generators) )
-
-    # TODO: add the coal ramping things to the constraint above!
-    # OCo =e= sum((t,b),CostUnserved*powerunserved(t,b)*dt) +  sum((t,b),CostSpilled*powerspilled(t,b)*dt) + sum((t,h),CostFictitiousFlows*qfictitious(t,h)) + sum((t,b),CostRampsCoal_hourly*(rampsAuxCoal1(t,b)+rampsAuxCoal2(t,b))) +  sum((t,b),CostRampsCoal_daily*(rampsAuxCoal3(t,b)+rampsAuxCoal4(t,b))) +  sum((t,b),CostWTCoal*(rampsAuxCoal1(t,b)+rampsAuxCoal2(t,b)+ rampsAuxCoal3(t,b)+rampsAuxCoal4(t,b)))
+    @constraint(model, eOperationCostO, OCo == sum((data.costUnserved * powerunserved[t, b] * data.dt) for t in 1:n_timesteps, b in 1:n_buses) + sum((data.costSpilled * powerspilled[t, b] * data.dt) for t in 1:n_timesteps, b in 1:n_buses) + sum((data.costFictitiousFlows * qfictitious[t, h]) for t in 1:n_timesteps, h in 1:data.n_hydro_generators) + sum( data.costRampsCoal_hourly * (rampsCoalHourlyPos(t, b) + rampsCoalHourlyNeg(t, b)) for t in 1:data.n_timesteps, b in 1:data.n_buses) + sum( data.costRampsCoal_daily * (rampsCoalDailyPos(t, b) + rampsCoalDailyNeg(t, b)) for t in 1:data.n_timesteps, b in 1:data.n_buses) )
 
 
     # yearly fixed operational costs of storage
@@ -187,14 +184,41 @@ eEpsilonTLCA(ic)                 ..TotalLCA(ic)=l=EpsilonLCA(ic);
     @constraint(model, eGeneratedPower, TotalGeneratedPower == sum(powerG[t, b, g] for t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators) + sum(powerR[t, b, r] for t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum(powerH[t, h] for t in 1:data.n_timesteps, h in 1:data.n_hydro_generators) + sum(powerROR[t, ror] for t in 1:data.n_timesteps, ror in 1:data.n_ror_generators) )
 
 
+    # minimal ammount of generated conventional power during the year
+    # The sum of all produced conventional power using fossil fuels must be smaller than the given factor of the total ammount of generated power.
+    @constraint(model, eMinFossilGeneration, sum(powerG[t, b, g] for t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators) >= data.minFossilGeneration * TotalGeneratedPower )
 
 
-eMinFossilGeneration           .. sum((t,b,g),powerG(t,b,g)) =g= MinFossilGeneration*TotalGeneratedPower;
+    # maximal ammount of generated conventional power during the year
+    # The sum of all produced conventional power using fossil fuels must be smaller than the given factor of the total ammount of generated power.
+    @constraint(model, eMaxFossilGeneration, sum(powerG[t, b, g] for t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators) <= data.maxFossilGeneration * TotalGeneratedPower )
 
 
+    # equation determining the ammount of houly coal power ramping
+    # The difference of positive and negative coal ramping has to match the difference of the produced conventional power from one hour to the next.
+    # Note: g=1 means the first conventional power source should be coal!
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses; t < data.n_timesteps], powerG[t + 1, b, 1] - powerG[t, b, 1] == rampsCoalHourlyPos[t, b] - rampsCoalHourlyNeg[t, b] )
 
-eMaxFossilGeneration           .. sum((t,b,g),powerG(t,b,g)) =l= MaxFossilGeneration*TotalGeneratedPower;   //to not limit this, we can set it to 1
-//Coal ramp costs: penalty on deviation from healthy plant factor(0.8)
+
+    # equation determining the ammount of daily coal power ramping
+    # The difference of positive and negative coal ramping has to match the difference of the produced conventional power from one day to the next (12h).
+    # Note: g=1 means the first conventional power source should be coal!
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses; t < data.n_timesteps - 11], powerG[t + 12, b, 1] - powerG[t, b, 1] == rampsCoalDailyPos[t, b] - rampsCoalDailyNeg[t, b] )
+
+#=
+TODO: these bounds for the coal ramping.
+BUT: are they even needed? since powerG should be limited? (but i didnt see that just yet...)
+eRampsCoal1(t,b)                      ..rampsAuxCoal1(t,b) =l=PexistingG(b,'g1');
+eRampsCoal2(t,b)                      ..rampsAuxCoal2(t,b) =l=PexistingG(b,'g1');
+eRampsCoal3(t,b)                      ..rampsAuxCoal3(t,b) =l=PexistingG(b,'g1');
+eRampsCoal4(t,b)                      ..rampsAuxCoal4(t,b) =l=PexistingG(b,'g1');
+=#
+
+
+    # upper limit for generated renewable power
+    # renewable power generation is limited by the existing and newly built capacity scaled by the generation profile, which dictates if the sun shines or wind blows.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators], powerR[t, b, r] <= data.profilesR[t, b, r] * (1000 * pR[b, r] + data.pexistingR[b, r]) )
+
 
 #=
 

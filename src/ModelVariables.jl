@@ -138,21 +138,13 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
 
     # COAL RAMPING
 
-    # TODO: what is the difference here? and what do they even do???
-    # TODO: rename them more adequately
-    # TODO: shouldnt one be enough?
-    # (t,b) auxiliary variable for coal ramping
-    # original name: rampsAuxCoal1 and all originally positive variables
-    @variable(model, rampsCoalHourly[1:n_timesteps, 1:n_buses])
-    @variable(model, rampsCoalDaily[1:n_timesteps, 1:n_buses])
-    #=
-    # (t,b) auxiliary variable for coal ramping
-    rampsAuxCoal2
-    # (t,b) auxiliary variable for coal ramping
-    rampsAuxCoal3
-    # (t,b) auxiliary variable for coal ramping
-    rampsAuxCoal4
-    =#
+    # (t,b) variables for coal ramping [MW]
+    # TODO: remove this: original name: rampsAuxCoal1 and all originally positive variables
+    # These variables are used to calculate the absolute ammount of both hourly and daily coal ramping that is taking place to penalise it. Therefore ther is one variable for negative and one for positive ramping.
+    @variable(model, rampsCoalHourlyPos[1:n_timesteps, 1:n_buses] >= 0)
+    @variable(model, rampsCoalHourlyNeg[1:n_timesteps, 1:n_buses] >= 0)
+    @variable(model, rampsCoalDailyPos[1:n_timesteps, 1:n_buses] >= 0)
+    @variable(model, rampsCoalDailyNeg[1:n_timesteps, 1:n_buses] >= 0)
 
 
 
