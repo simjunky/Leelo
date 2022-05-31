@@ -331,32 +331,49 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
     @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies], powerCT[t, b, ct] <= 1000 * pCT[b, ct] + data.pexistingCT[b, ct, i_current_year] )
 
 
+    # the approach for powerCT: unit is MW if either VectorCT_O or VectorCT_D is electricity. If not, it is the entity VectorCT_D per unit time.
+    # So, in the energy balance equation, we separate the CT that DON'T have VectorCT_O as electricity while charging, they DO NOT need the CF. While Discharging, all need the CF, whether the VectorCT_D is electricity or not!
 
 
-*our approach for powerCT: unit is MW if either VectorCT_O or VectorCT_D is electricity.If not, it is the entity VectorCT_D per unit time.
+    # total energy balance for all storage technologies
+    # calculated by summing up the losses of stored energy, the sum of energy converted using electricity and the sum converted from other sources. Then, the sum of expended stored energy is subtracted.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies; t < data.n_timesteps], storedST[t + 1, b, st] - storedST[t, b, st] == -vLossST[t, b, st] + sum(data.conversionFactorCT[ct, i_current_year] * data.conversionEfficiencyCT[ct, i_current_year] * powerCT[t, b, ct] * data.dt for ct in 1:data.n_conversion_technologies if ((data.vectorCT_D[ct] == data.storageEntityST[st]) && (data.vectorCT_O[ct] == "e"))) + sum(data.conversionEfficiencyCT[ct, i_current_year] * powerCT[t, b, ct] * data.dt for ct in 1:data.n_conversion_technologies if ((data.vectorCT_D[ct] == data.storageEntityST[st]) && (data.vectorCT_O[ct] != "e"))) - sum(powerCT[t, b, ct] / (data.conversionFactorCT[ct, i_current_year] * data.conversionEfficiencyCT[ct, i_current_year]) * data.dt for ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == data.storageEntityST[st])) )
 
-*so, in the energy balance eqn, we separate the CT that DON'T have VectorCT_O as electricity while charging, they DO NOT need the CF.WHile Discharging, all need the CF,whether the VectorCT_D is electricity or not!
 
-*the following equation follows this and can replace the above two equations (CSP exception also taken care of!)
+    # storage boundary condition
+    # the ammount of stored energy in each bus should be the same at the begining and end of the year and for every storage technology.
+    # This constraint is not valid for Carbon capture technologies (CO2).
+    @constraint(model, [b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] != "CO2"], storedST[1, b, st] == storedST[data.n_timesteps, b, st] )
 
-eVolumeSTall(t,b,st)$(ord(t) le card(t)-1) .. storedST(t+1,b,st)    =e= storedST(t,b,st)-vLossST(t,b,st) + sum(ct$(VectorCT_D(ct) eq VectorST(st) AND VectorCT_O(ct) eq 1),CF(ct)* etaconv(ct)* powerCT(t,b,ct)*dt)+ sum(ct$(VectorCT_D(ct) eq VectorST(st) AND VectorCT_O(ct) ne 1),etaconv(ct)* powerCT(t,b,ct)*dt)- sum(ct$(VectorCT_O(ct) eq VectorST(st)), powerCT(t,b,ct)/(CF(ct)*etaconv(ct))*dt);
 
-eVolumeIniS(tfirst,b,st)               .. storedST(tfirst,b,st) =e= vIniST(b,st);
+    # losses of stored energy
+    # the loss is proportional to the currently stored ammount of energy
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies], vLossST[t, b, st] == storedST[t, b, st] * data.lossesST[st] /24 * data.dt )
 
-eVolumeFinS(tlast,b,st)                .. storedST(tlast,b,st)  =e= vFinST(b,st);
 
-eVolumeIniFinS(b,st)$(ord(st) ne 7)    .. vFinST(b,st)          =e= vIniST(b,st);
-   // this constraint is not valid for CCS
+    # upper limit for stored energy
+    # the upper limit is given by the built storage capacity (scaled to MW) and existing capacity.
+    # Carbon capture is excluded, it has its own constraint.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] != "CO2"], storedST[t, b, st] <= 1000 * eST[b, st] + data.vExistingST[b, st, i_current_year] )
 
-eVolLossS(t-1,b,st)                    .. vLossST(t,b,st)=e= storedST(t,b,st)*LossesST(st)/24*dt;
 
-eVolMaxST(t,b,st)$(ord(st) ne 7)       .. storedST(t,b,st) =l= eST(b,st)*1000+VexistingST(b,st);
-// st 7 is Carbon capture and storage tech . Here possible storage energy (Carbon) is limited to 20% of new investment (previous installed cap is full)
-eVolMaxCCS(t,b,st)$(ord(st) eq 7)      .. storedST(t,b,st) =l= (0.2)*1000*eST(b,st);
+    # upper limit for carbon capture
+    # the upper limit is given as 20% of only the newly built storage capacity (scaled to MW).
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] == "CO2"], storedST[t, b, st] <= 0.2 * 1000 * eST[b, st] )
 
-eVolMinST(t,b,st)$(ord(st) ne 7)       .. storedST(t,b,st) =g= VMinST(st)*(eST(b,st)*1000+VexistingST(b,st));
 
-eVolMinCCS(t,b,st)$(ord(st) eq 7)       .. storedST(t,b,st) =g= VMinST(st)*(eST(b,st)*1000);
+    # lower limit for stored energy
+    # the lower limit is given as factor of the total installed capacity.
+    # Carbon capture storage is excluded, it has its own constraint.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] != "CO2"], storedST[t, b, st] >= data.vMinST[st] * (1000 * eST[b, st] + data.vExistingST[b, st, i_current_year]) )
+
+
+    # lower limit for carbon capture
+    # the lower limit is given as factor of only the newly built storage capacity (scaled to MW).
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] == "CO2"], storedST[t, b, st] >= data.vMinST[st] * 1000 * eST[b, st] )
+
+
+
 
 #=
 
