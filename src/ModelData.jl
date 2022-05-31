@@ -199,7 +199,7 @@ struct ModelData
     # TODO: GAMS said: fixed op cost of st per vol (k€\MWh_ins); but it should neither be EUROs nor MWH!
     # (st, y) Fix operational cost of running storage technology st in year y [k Dollar per installed MW]
     costOperationFixST::Array{Float64, 2}
-    # (st) Lifetime of the conversion technology st built in year y [years]
+    # (st, y) Lifetime of the conversion technology st built in year y [years]
     lifetimeST::Array{Int64, 2}
     # (st) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of storage technology [unitless]
     annuityST::Array{Float64, 1}

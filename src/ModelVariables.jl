@@ -224,6 +224,7 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
     # lower bound given by positivity condition and  minimal volume adjusted from MW to GW
     set_lower_bound.(eST, max.(data.minVolumePotST / 1000, 0.0))
     # upper bound given by not yet existing volume (max - existing) adjusted from MW to GW
+    # TODO: check if the upper bound here is ok since vExistingST depends on curret year...
     set_upper_bound.(eST, (data.maxVolumePotST - data.vExistingST) / 1000)
 
     # (h) new(added) capacity of hydropower plant h in [GW]

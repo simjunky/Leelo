@@ -373,6 +373,41 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
     @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] == "CO2"], storedST[t, b, st] >= data.vMinST[st] * 1000 * eST[b, st] )
 
 
+    # Energy2Power conversion ratios
+    # there exists one Min & Max for each charging & discharging
+    # Carbon capture has its own constraint
+
+    # Energy2Power ratio maximum for charging systems
+    # computed as TODO...
+    @constraint(model, [b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] != "CO2"], 1000 * eST[b, st] + data.vExistingST[b, st, i_current_year] <= data.energy2PowerRatioMax[st] * sum( (1000 * pCT[b, ct]+ data.pexistingCT[b, ct, i_current_year]) * data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if (data.vectorCT_D[ct] == data.storageEntityST[st])) )
+
+
+    # Energy2Power ratio maximum for discharging systems
+    # computed as TODO...
+    @constraint(model, [b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] != "CO2"], 1000 * eST[b, st] + data.vExistingST[b, st, i_current_year] <= data.energy2PowerRatioMax[st] * sum( (1000 * pCT[b, ct]+ data.pexistingCT[b, ct, i_current_year]) / data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == data.storageEntityST[st])) )
+
+
+    # Energy2Power ratio minimum for charging systems
+    # computed as TODO...
+    @constraint(model, [b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] != "CO2"], 1000 * eST[b, st] + data.vExistingST[b, st, i_current_year] >= data.energy2PowerRatioMin[st] * sum( (1000 * pCT[b, ct] + data.pexistingCT[b, ct, i_current_year]) * data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if (data.vectorCT_D[ct] == data.storageEntityST[st])) )
+
+
+    # Energy2Power ratio minimum for discharging systems
+    # computed as TODO...
+    @constraint(model, [b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] != "CO2"], 1000 * eST[b, st] + data.vExistingST[b, st, i_current_year] >= data.energy2PowerRatioMin[st] * sum( (1000 * pCT[b, ct] + data.pexistingCT[b, ct, i_current_year]) / data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == data.storageEntityST[st])) )
+
+
+    # Energy2Power ratio minimum for carbon capture systems
+    # computed as TODO...
+    # Note: for carbon capture no minimum necessairy and charging only.
+    @constraint(model, [b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] == "CO2"], 0.2 * 1000 * eST[b, st] >= data.energy2PowerRatioMin[st] * sum( (1000 * pCT[b, ct] + data.pexistingCT[b, ct, i_current_year]) * data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if (data.vectorCT_D[ct] == data.storageEntityST[st])) )
+
+
+    # max number of discharge cycles from storage
+    # computed as TODO...
+    # cyclesST represents the max no. of cycles allowed for a ST in its lifetime. In the following, the LHS represents the no. of complete discharges (cycles) of ST in the simulation period.
+    # the RHS represents the max allowed cycles in the simulation period (whatever fraction of year taken!)
+    @constraint(model, [b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] != "CO2"], data.dt * sum( powerCT[t, b, ct] / data.conversionFactorCT[ct, i_current_year]  for t in 1:data.n_timesteps, ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == data.storageEntityST[st])) <= (1000 * eST[b, st] + data.vExistingST[b, st, i_current_year]) * data.cyclesST[st] / data.lifetimeST[st, i_current_year] * data.fractionOfYear )
 
 
 #=
