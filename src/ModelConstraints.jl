@@ -453,36 +453,59 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
 
     # power reserves
 
-    # demand power balance
-    # the demand has to equal the sum of produced, used and unserved power.
-    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses],  ==  )
+    # system requirement for operating reserve
+    # the reserve depends on the reserve for largest power plant, the demand dependent reserve and a reserve dependent on the maximal renewable power production.
+    # Note: ReserveLargestUnit is >0 only if ReserveFast=0;
+    @constraint(model, [t in 1:data.n_timesteps],  reserveOperatingReq[t] == data.reserveLargestUnit + data.reserveDemand * sum(data.demand[t, b, i_current_year] for b in 1:data.n_buses) + data.reserveRenewables * sum(data.profilesR[t, b, r] * (data.pexistingR[b, r, i_current_year] + 1000 * pR[b, r]) for b in 1:data.n_buses, r in 1:data.n_ren_generators) )
 
 
-eReserveOperatingReq(t)        .. reserveOperatingReq(t) =e= ReserveLargestUnit+ReserveDemand*sum(b,Demand(t,b))+ReserveRenewables*sum((b,r),ProfilesR(t,b,r)*(PexistingR(b,r)+ pR(b,r)*1000));
-//ReserveLargestUnit is >0 only if ReservaFast=0;
-
-eReserveFrequencyReq(t)        .. reserveFrequencyReq(t) =e= ReserveFast;
-//usually LargestUnit (if not included above)
-
-// now,giving freq only to Li-ion storage
-eReserveOperating(t)           .. sum((b,ct)$ (VectorCT_D(ct) eq 1),reserveOperatingCT(t,b,ct))+ sum(h$(VMaxH(h)>0),reserveOperatingH(t,h))+sum((b,g),reserveOperatingG(t,b,g)) =g= reserveOperatingReq(t);
-
-eReserveFrequency(t)           .. sum((b,ct)$(VectorCT_O(ct) eq 3 and VectorCT_D(ct) eq 1),reserveFrequencyCT(t,b,ct))+ sum(h$(VMaxH(h)>0),reserveFrequencyH(t,h))+sum((b,g),reserveFrequencyG(t,b,g)) =g= reserveFrequencyReq(t);
-
-eReserveMaxH(t,h)$(VMaxH(h)>0) .. reserveFrequencyH(t,h)  +reserveOperatingH(t,h)  +powerH(t,h)  =l= PexistingH(h)+pH(h)*1000;
-eReserveMaxG(t,b,g)            .. reserveFrequencyG(t,b,g)+reserveOperatingG(t,b,g)+powerG(t,b,g)=l= pG(b,g)*1000+PexistingG(b,g);
+    # system requirement for frequency reserve
+    # TODO: is this constraint really needed?
+    @constraint(model, [t in 1:data.n_timesteps],  reserveFrequencyReq[t] == data.reserveFast )
 
 
-//to sort things out, all Reserve S involving eqns:chnged with reserveCT
-eReserveMaxCT(t,b,ct)$(VectorCT_D(ct) eq 1)        .. reserveFrequencyCT(t,b,ct)+reserveOperatingCT(t,b,ct)+ powerCT(t,b,ct) =l= pCT(b,ct)*1000+ PexistingCT(b,ct);
-eReserveMaxSEnergy(t,b,st)       .. (sum(ct $ (VectorCT_O(ct) eq VectorST(st)),powerCT(t,b,ct)/CF(ct)) + sum(ct $ (VectorCT_O(ct) eq VectorST(st) and VectorCT_D(ct) eq 1 ),(reserveFrequencyCT(t,b,ct)+reserveOperatingCT(t,b,ct))/CF(ct)))*dt =l= storedST(t,b,st);
+    # total provided operating reserve
+    # the reserves of conversion technologies, conventional generators an hydro grnerators have to be greater than the required reserve.
+    @constraint(model, [t in 1:data.n_timesteps],  reserveOperatingReq[t] <= sum(reserveOperatingCT[t, b, ct] for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies if (data.vectorCT_D[ct] == "e")) + sum(reserveOperatingH[t, h] for h in 1:data.n_hydro_generators if (data.vMaxH[h] > 0.0)) + sum(reserveOperatingG[t, b, g] for b in 1:data.n_buses, g in 1:data.n_conv_generators) )
 
 
-eYieldWater2Reserve(t,h)       .. qreserve(t,h)*kH(h) =e=  reserveOperatingH(t,h)*ReserveOUsedRatio+reserveFrequencyH(t,h)*ReserveFUsedRatio;
+    # total provided frequency reserve
+    # the frequency reserves of conversion technologies, conventional generators an hydro grnerators have to be greater than the required reserve.
+    # giving freq reserve only to Li-ion storage.
+    @constraint(model, [t in 1:data.n_timesteps],  reserveFrequencyReq[t] <= sum(reserveFrequencyCT[t, b, ct] for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == "li-ions")) + sum(reserveFrequencyH[t, h] for h in 1:data.n_hydro_generators if (data.vMaxH[h] > 0.0)) + sum(reserveFrequencyG[t, b, g] for b in 1:data.n_buses, g in 1:data.n_conv_generators) )
 
-eReserveMaxHEnergy(t,h)$(VMaxH(h)>0)   .. (reserveFrequencyH(t,h)  +reserveOperatingH(t,h)  +powerH(t,h) )*dt =l= storedH(t,h);
 
-//Autonomy
+    # maximal provived reserve by hydro generators
+    # the sum of reserves and produced power are limited by the built and existing capacities.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators; data.vMaxH[h] > 0.0], reserveFrequencyH[t, h] + reserveOperatingH[t, h] + powerH[t, h] <= 1000 * pH[h] + data.pexistingH[h, i_current_year] )
+
+
+    # maximal provived reserve by conventional generators
+    # the sum of reserves and produced power are limited by the built and existing capacities.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators], reserveFrequencyG[t, b, g] + reserveOperatingG[t, b, g] + powerG[t, b, g] <= 1000 * pG[b, g] + data.pexistingG[b, g, i_current_year] )
+
+
+    # maximal provived reserve by conversion technologies
+    # the sum of reserves and produced power are limited by the built and existing capacities.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies; data.vectorCT_D[ct] == "e"], reserveFrequencyCT[t, b, ct] + reserveOperatingCT[t, b, ct] + powerCT[t, b, ct] <= 1000 * pCT[b, ct] + data.pexistingCT[b, ct, i_current_year] )
+
+
+    # energy availability condition in ST corr to CT
+    # stored energy has to be greater than the ammount of energy taken out in addition to the reserve.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies], storedST[t, b, st] >= data.dt * ( sum(powerCT[t, b, ct] / data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == storageEntityST[st])) + sum((reserveFrequencyCT[t, b, ct] + reserveOperatingCT[t, b, ct]) / data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if ((data.vectorCT_O[ct] == storageEntityST[st]) && (data.vectorCT_D[ct] == "e"))) ) )
+
+
+    # conversion from water to reserve (estimate)
+    # the reserved water flow times the Water2Power yield has to be equal to the sum of operational and frequency reserves.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], qreserve[t, h] * data.kH[h] == data.reserveOUsedRatio * reserveOperatingH[t, h] + data.reserveFUsedRatio * reserveFrequencyH[t, h] )
+
+
+    # water availability condition for reserve
+    # the stored energy in the water needs to be greater than the produced energy and reserves combined.
+    @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators; data.vMaxH[h] > 0.0], storedH[t, h] >= data.dt * (reserveOperatingH[t, h] + reserveFrequencyH[t, h] + powerH[t, h]) )
+
+
+    # autonomy constraints
 
 // Note: autonomyST units are MWh electrical which don't always match with storedST units; but are better for consistency
 eAutonomyBalance(t)               .. sum((b,st)$(ord(st) ne 7), autonomyST(t,b,st))+sum(h$(VMaxH(h)>0), autonomyH(t,h))=g= Autonomy;
