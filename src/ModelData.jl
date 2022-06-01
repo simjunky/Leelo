@@ -290,7 +290,7 @@ struct ModelData
 
     # (l)    maximum available line capacity to be installed in MW
     maxCapacityPotL::Array{Float64, 1}
-    # (l)               (origen) bus from which line l starts
+    # (l)               (origin) bus from which line l starts
     barO::Array{Int64, 1}
     # (l)               (destination) bus to which lines l goes
     barD::Array{Int64, 1}

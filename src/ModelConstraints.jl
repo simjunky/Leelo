@@ -410,6 +410,91 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
     @constraint(model, [b in 1:data.n_buses, st in 1:data.n_storage_technologies; data.storageEntityST[st] != "CO2"], data.dt * sum( powerCT[t, b, ct] / data.conversionFactorCT[ct, i_current_year]  for t in 1:data.n_timesteps, ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == data.storageEntityST[st])) <= (1000 * eST[b, st] + data.vExistingST[b, st, i_current_year]) * data.cyclesST[st] / data.lifetimeST[st, i_current_year] * data.fractionOfYear )
 
 
+    # Transmision constraints
+
+    # upper limit for building transmission lines
+    # TODO: this should already exist as variable bound of pL
+    #@constraint(model, [l in 1:data.n_lines], pL[l] <= (data.maxCapacityPotL[l] - data.capLExisting[l, i_current_year]) / 1000 )
+
+
+    # upper limit for transmission line throughput (positive direction)
+    # throughput is limited by the built and existing line capacity
+    @constraint(model, [t in 1:data.n_timesteps, l in 1:data.n_lines], powerLpos[t, l] <= 1000 * pL[l] + data.capLExisting[l, i_current_year] )
+
+
+    # upper limit for transmission line throughput (negative direction)
+    # throughput is limited by the built and existing line capacity
+    @constraint(model, [t in 1:data.n_timesteps, l in 1:data.n_lines], powerLneg[t, l] <= 1000 * pL[l] + data.capLExisting[l, i_current_year] )
+
+
+    # power line losses of line l
+    # the losses are equal to a loss factor of the total throughput in both directions
+    @constraint(model, [t in 1:data.n_timesteps, l in 1:data.n_lines], powerLlosses[t, l] == (powerLpos[t, l] + powerLneg[t, l]) * data.lossesL[l] )
+
+
+    # power imports of bus b
+    # the sum of transfered power ending up in bus b without half of the losses occuring on the lines.
+    # this means losses are allocated equally in b_ori and b_des.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses], powerBimp[t, b] == sum( (powerLpos[t, l] - powerLneg[t, l] - powerLlosses[t, l] / 2) for l in 1:data.n_lines if (data.barD[l] == b)) )
+
+
+    # power exports of bus b
+    # the sum of transfered power leaving bus b without half of the losses occuring on the lines.
+    # this means losses are allocated equally in b_ori and b_des.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses], powerBexp[t, b] == sum( (powerLpos[t, l] - powerLneg[t, l] + powerLlosses[t, l] / 2) for l in 1:data.n_lines if (data.barO[l] == b)) )
+
+
+    # power systems
+
+    # demand power balance
+    # the demand has to equal the sum of produced, used and unserved power.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses], data.demand[t, b, i_current_year] == powerunserved[t, b] + powerBimp[t, b] - powerBexp[t, b] + sum(powerG[t, b, g] for g in 1:data.n_conv_generators) + sum(powerR[t, b, r] for r in 1:data.n_ren_generators) + sum(powerH[t, h] - powerHpump[t, h] for h in 1:data.n_hydro_generators if (data.busH[h] == b)) + sum(powerRoR[t, ror] for ror in 1:data.n_ror_generators if (data.busRoR[ror] == b)) - sum(powerCT[t, b, ct] for ct in 1:data.n_conversion_technology if (data.vectorCT_O[ct] == "e")) + sum(powerCT[t, b, ct] for ct in 1:data.n_conversion_technology if (data.vectorCT_D[ct] == "e")) )
+
+
+    # power reserves
+
+    # demand power balance
+    # the demand has to equal the sum of produced, used and unserved power.
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses],  ==  )
+
+
+eReserveOperatingReq(t)        .. reserveOperatingReq(t) =e= ReserveLargestUnit+ReserveDemand*sum(b,Demand(t,b))+ReserveRenewables*sum((b,r),ProfilesR(t,b,r)*(PexistingR(b,r)+ pR(b,r)*1000));
+//ReserveLargestUnit is >0 only if ReservaFast=0;
+
+eReserveFrequencyReq(t)        .. reserveFrequencyReq(t) =e= ReserveFast;
+//usually LargestUnit (if not included above)
+
+// now,giving freq only to Li-ion storage
+eReserveOperating(t)           .. sum((b,ct)$ (VectorCT_D(ct) eq 1),reserveOperatingCT(t,b,ct))+ sum(h$(VMaxH(h)>0),reserveOperatingH(t,h))+sum((b,g),reserveOperatingG(t,b,g)) =g= reserveOperatingReq(t);
+
+eReserveFrequency(t)           .. sum((b,ct)$(VectorCT_O(ct) eq 3 and VectorCT_D(ct) eq 1),reserveFrequencyCT(t,b,ct))+ sum(h$(VMaxH(h)>0),reserveFrequencyH(t,h))+sum((b,g),reserveFrequencyG(t,b,g)) =g= reserveFrequencyReq(t);
+
+eReserveMaxH(t,h)$(VMaxH(h)>0) .. reserveFrequencyH(t,h)  +reserveOperatingH(t,h)  +powerH(t,h)  =l= PexistingH(h)+pH(h)*1000;
+eReserveMaxG(t,b,g)            .. reserveFrequencyG(t,b,g)+reserveOperatingG(t,b,g)+powerG(t,b,g)=l= pG(b,g)*1000+PexistingG(b,g);
+
+
+//to sort things out, all Reserve S involving eqns:chnged with reserveCT
+eReserveMaxCT(t,b,ct)$(VectorCT_D(ct) eq 1)        .. reserveFrequencyCT(t,b,ct)+reserveOperatingCT(t,b,ct)+ powerCT(t,b,ct) =l= pCT(b,ct)*1000+ PexistingCT(b,ct);
+eReserveMaxSEnergy(t,b,st)       .. (sum(ct $ (VectorCT_O(ct) eq VectorST(st)),powerCT(t,b,ct)/CF(ct)) + sum(ct $ (VectorCT_O(ct) eq VectorST(st) and VectorCT_D(ct) eq 1 ),(reserveFrequencyCT(t,b,ct)+reserveOperatingCT(t,b,ct))/CF(ct)))*dt =l= storedST(t,b,st);
+
+
+eYieldWater2Reserve(t,h)       .. qreserve(t,h)*kH(h) =e=  reserveOperatingH(t,h)*ReserveOUsedRatio+reserveFrequencyH(t,h)*ReserveFUsedRatio;
+
+eReserveMaxHEnergy(t,h)$(VMaxH(h)>0)   .. (reserveFrequencyH(t,h)  +reserveOperatingH(t,h)  +powerH(t,h) )*dt =l= storedH(t,h);
+
+//Autonomy
+
+// Note: autonomyST units are MWh electrical which don't always match with storedST units; but are better for consistency
+eAutonomyBalance(t)               .. sum((b,st)$(ord(st) ne 7), autonomyST(t,b,st))+sum(h$(VMaxH(h)>0), autonomyH(t,h))=g= Autonomy;
+// so, we find the equivalent conversion factor from Stored Energy to Electricity and use the min of it!
+eAutonomySAux1(t,b,st)$(ord(st) ne 7)             .. autonomyST(t,b,st) =l= storedST(t,b,st);
+//autonomy offered by ST must be less than discharging capacity * autonomy hrs
+eAutonomySAux2(t,b,st)$(ord(st) ne 7)   .. autonomyST(t,b,st) =l= (sum(ct $ (VectorCT_O(ct) eq VectorST(st) and VectorCT_D(ct) eq 1) ,(pCT(b,ct)*1000) +PexistingCT(b,ct)))*AutonomyHours;
+eAutonomyHAux1(t,h)$(VMaxH(h)>0)  .. autonomyH(t,h)   =l= storedH(t,h);
+eAutonomyHAux2(t,h)$(VMaxH(h)>0)  .. autonomyH(t,h)   =l= (PexistingH(h)+(pH(h)*1000))*AutonomyHours;
+
+
+
 #=
 
 *Generators and renewables
@@ -483,14 +568,6 @@ eVolMinCCS                      min stored energy for CCS
 //eVMaxSPotential                 maximum energy potential (e.g. reservoirs)
 //ePMaxSPotential                 maximum power potential (e.g. heads of hydropower)
 eCyclesST                      max no. of discharge cycles from storage
-*Transmission
-ePMaxL
-eTMaxExp                       max. transmitted power
-eTMaxImp                       max. transmitted power
-
-eLineLosses                    losses of line l given the flow
-eImportsB                      resulting power imports to bus b inc losses
-eExportsB                      resulting power export to bus b inc losses
 
 
 *Coal ramping
