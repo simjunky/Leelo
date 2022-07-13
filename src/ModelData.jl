@@ -9,6 +9,10 @@ struct ModelData
 
     # interest rate at which to borrow money [unitless]
     interest_rate::Float64
+    # number of years covered
+    n_years::Int64
+    # all years covered
+    years::Array{Int64, 1}
     # TODO: check if its accually Int:
     # duration of time step (hours)
     dt::Float64
@@ -18,6 +22,7 @@ struct ModelData
     modelType::String
     # index for current scenario
     scenario::String
+    # TODO: remove this:
     # numerical value of current year
     curyear::Int64
     # total demand [MWh]; GAMS: TotalDemand=sum((t,b),Demand(t,b))*dt
@@ -424,6 +429,8 @@ struct ModelData
 
 
     function ModelData(;interest_rate::Float64 = 0.0,
+                        n_years::Int64 = 0,
+                        years::Array{Int64, 1} = [0],
                         dt::Float64 = 0.0,
                         n_timesteps::Int64 = 0,
                         modelType::String = "0.0",
@@ -590,6 +597,8 @@ struct ModelData
 
 
         return new( interest_rate,
+                    n_years,
+                    years,
                     dt,
                     n_timesteps,
                     modelType,

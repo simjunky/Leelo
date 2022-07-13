@@ -146,6 +146,8 @@ function read_model_data()::ModelData
     # TODO: keep replacing placeholder-zeros with real values
 
     model_data = ModelData(interest_rate =  scenario_setting_data[1, :interest_rate],
+                        n_years = scenario_setting_data[1, :n_years],
+                        years = collect(range(scenario_setting_data[1, :starting_year], length = scenario_setting_data[1, :n_years], step = scenario_setting_data[1, :year_timestep])),
                         dt = Float64(scenario_setting_data[1, :timestep_length]),
                         n_timesteps =  scenario_setting_data[1, :n_timesteps],
                         modelType =  scenario_setting_data[1, :model_type],
@@ -247,7 +249,7 @@ function read_model_data()::ModelData
                         lifetimeL = transmission_data[!, :LifetimeL],
                         annuityL = [0.0], # TODO: calculate from lifetime
                         demand = my_demand,
-                        autonomyDays = scenario_setting_data[1, :AutonomyDays],
+                        autonomyDays = Float64(scenario_setting_data[1, :AutonomyDays]),
                         costAutonomy = scenario_setting_data[1, :CostAutonomy],
                         energyCurtailedMax = scenario_setting_data[1, :EnergyCurtailedMax],
                         reserveDemand = 0.0, # TODO
