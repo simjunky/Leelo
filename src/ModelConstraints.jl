@@ -1,22 +1,50 @@
 
 # TODO: rewrite docstring
-# Constraint creation
+# Complete constraint creation
 """
-This is currently the function called to add constraints to the model
+This is currently the function called to add all constraints to the model
 """
 function add_model_constraints(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
 
     # TODO: remove unneeded outputs
     @info "add_model_constraints() called"
 
-    #@constraint(model, constraint_name, 6x + 8y >= 100)
+    for y in 1:data.n_years
+        add_yearly_constraints(model, config, data, y)
+        if y < data.n_years
+            add_transition_constraints(model, config, data, y, y+1)
+        end
+    end
 
-    #TODO:
-    i_current_year #index of current year
+    return nothing
+end
+
+
+# TODO: rewrite docstring
+# Constraint creation for transition in between years
+"""
+This is currently the function called to add constraints to the model to handle the change in between years
+"""
+function add_transition_constraints(model::JuMP.Model, config::AbstrConfiguration, data::ModelData, i_past_year::Int64, i_future_year::Int64)
+
+    # TODO: remove unneeded outputs
+    @info "add_transition_constraints() called for " * string(i_past_year) * " to " * string(i_future_year)
+
+    return nothing
+end
+
+
+# TODO: rewrite docstring
+# Constraint creation for one specific year
+"""
+This is currently the function called to add constraints to the model for the computation for one given year.
+"""
+function add_yearly_constraints(model::JuMP.Model, config::AbstrConfiguration, data::ModelData, i_current_year::Int64)
+
+    # TODO: remove unneeded outputs
+    @info "add_yearly_constraints() called for " * string(i_current_year)
 
     #TODO: all other indices should be called using "data." e.g. data.n_buses
-
-
 
     # Constraints on the Objective function.
 
