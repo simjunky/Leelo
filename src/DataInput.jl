@@ -93,6 +93,12 @@ function read_model_data()::ModelData
     # create DataFrame containing data of renewable power generator profiles
     renewable_profiles_data = DataFrame(XLSX.readtable(renewable_profiles_file, "Tabelle1", infer_eltypes = true)...)
 
+    # filename of file containing data of csp profiles
+    csp_profiles_file = folder * "CSP_profiles.xlsx"
+
+    # create DataFrame containing data of csp profiles
+    csp_profiles_data = DataFrame(XLSX.readtable(csp_profiles_file, "Tabelle1", infer_eltypes = true)...)
+
 
 
     #= TODO: read in the following data:
@@ -106,7 +112,7 @@ function read_model_data()::ModelData
     #@show describe(conv_generator_data)
     #@show describe(ren_generator_data)
     #@show describe(converter_data)
-    @show describe(storage_data)
+    #@show describe(storage_data)
     #@show describe(transmission_data)
     #@show describe(demand_profile_data)
     #@show describe(hydro_cascades_data)
@@ -156,7 +162,7 @@ function read_model_data()::ModelData
 
     end
 
-    @show my_pexistingG # TODO: remove
+    #@show my_pexistingG # TODO: remove
 
 
     # TODO: keep replacing placeholder-zeros with real values
@@ -218,7 +224,7 @@ function read_model_data()::ModelData
                         pCTpho = [0.0 0.0; 0.0 0.0],  # TODO
                         vectorCT_O = converter_data[!, :inputCT],
                         vectorCT_D = converter_data[!, :outputCT],
-                        ProfilesCSP = [0.0 0.0; 0.0 0.0], # TODO
+                        ProfilesCSP = Matrix{Float64}(csp_profiles_data[!, Symbol.("profilesCSPb" .* string.(collect(1:n_buses)) )]),
                         costCapST = Matrix{Float64}(storage_data[!, Symbol.("CostCapSTy" .* string.(years))]),
                         costOperationVarST = Matrix{Float64}(storage_data[!, Symbol.("CostOperationVarSTy" .* string.(years))]),
                         costOperationFixST = Matrix{Float64}(storage_data[!, Symbol.("CostOperationFixSTy" .* string.(years))]),
