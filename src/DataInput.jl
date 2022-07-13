@@ -84,13 +84,18 @@ function read_model_data()::ModelData
     # filename of file containing data of preexisting capacities
     existing_capacity_file = folder * "preexisting_capacities.xlsx"
 
-    # create DataFrame containing data of run of river generators
+    # create DataFrame containing data of existing capacities
     existing_capacity_data = DataFrame(XLSX.readtable(existing_capacity_file, "Tabelle1", infer_eltypes = true)...)
+
+    # filename of file containing data of renewable generator profiles
+    renewable_profiles_file = folder * "renewable_profiles.xlsx"
+
+    # create DataFrame containing data of renewable power generator profiles
+    renewable_profiles_data = DataFrame(XLSX.readtable(renewable_profiles_file, "Tabelle1", infer_eltypes = true)...)
 
 
 
     #= TODO: read in the following data:
-    renewable_profiles.xlsx
     hydro_run_of_river_profiles.xlsx
     =#
 
@@ -126,6 +131,7 @@ function read_model_data()::ModelData
     my_pexistingCT = zeros(Float64, (n_buses, n_conversion_technologies, n_years))
     my_VexistingST = zeros(Float64, (n_buses, n_storage_technologies, n_years))
     my_demand = zeros(Float64, (scenario_setting_data[1, :n_timesteps], n_buses, n_years))
+    my_profilesR = zeros(Float64, ((scenario_setting_data[1, :n_timesteps], n_buses, n_ren_generators)))
 
     for i in 1:n_buses
         my_pexistingG[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "PexistingG"), Symbol.("y" .* string.(years)) ])
@@ -137,6 +143,8 @@ function read_model_data()::ModelData
         my_VexistingST[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "VexistingST"), Symbol.("y" .* string.(years)) ])
 
         my_demand[:, i, :] = Array{Float64, 2}(demand_profile_data[!, Symbol.("ElectricityDemandb" * string(i) * "y" .* string.(years)) ])
+
+        my_profilesR[:, i, :] = Array{Float64, 2}(renewable_profiles_data[!, Symbol.("profilesRb" * string(i) * "r" .* string.(collect(1:n_ren_generators)) ) ])
 
     end
 
@@ -183,9 +191,9 @@ function read_model_data()::ModelData
                         lifetimeR = Matrix{Int64}(ren_generator_data[!,Symbol.("LifetimeRy".*string.(years))]),
                         annuityR = [0.0], #TODO: remove and fill otherwise #old: ren_generator_data[!, :AnnuityR],
                         technologyR = ren_generator_data[!, :Tech],
-                        profilesR = zeros(Float64, (1,1,1)), # TODO
-                        minCapacityPotR = [0.0 0.0; 0.0 0.0], # TODO
-                        maxCapacityPotR = [0.0 0.0; 0.0 0.0],  # TODO
+                        profilesR = my_profilesR,
+                        minCapacityPotR = Matrix{Float64}(ren_generator_data[!,Symbol.("minCapacityPotRb" .* string.(collect(1:n_buses)))]),
+                        maxCapacityPotR = Matrix{Float64}(ren_generator_data[!,Symbol.("maxCapacityPotRb" .* string.( collect(1:n_buses) ))]),
                         pexistingR = my_pexistingR,
                         pRpho = [0.0 0.0; 0.0 0.0], # TODO, or has it been excluded?
                         costCapCT = Matrix{Float64}(converter_data[!, Symbol.("CostCapCTy" .* string.(years))]),
