@@ -22,30 +22,30 @@ function add_model_constraints(model::JuMP.Model, config::AbstrConfiguration, da
 
     # the yearly operational cost of renewable power generation
     # Calculated by multiplying the operational expenses of a renewable generator by its produced power within a timestep times the duration of the timestep.
-    @constraint(model, eOperationCostR, OCr == sum((data.CostOperationVarR[r, i_current_year] * powerR[t, b, r] * data.dt) for t in 1:n_timesteps, b in 1:n_buses, r in 1:n_ren_generators))
+    @constraint(model, eOperationCostR, OCr == sum((data.CostOperationVarR[r, i_current_year] * powerR[t, b, r] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators))
 
 
     # the yearly operational cost of conventional power generators
     # Calculated by multiplying the operational expenses of a conventional generator by its produced power within a timestep times the duration of the timestep.
-    @constraint(model, eOperationCostR, OCg == sum((data.CostOperationVarG[g, i_current_year] * powerG[t, b, g] * data.dt) for t in 1:n_timesteps, b in 1:n_buses, g in 1:n_conv_generators))
+    @constraint(model, eOperationCostR, OCg == sum((data.CostOperationVarG[g, i_current_year] * powerG[t, b, g] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators))
 
 
     # the yearly operational cost of energy storage
     # It is the sum of the operational cost of storage technologies and of conversion technologies.
     # The operational cost of conversion technologies is calculated by multiplying the operational expenses of a convention technology by its produced power within a timestep times the duration of the timestep.
     # The operational cost of storage technologies is calculated by multiplying the operational expenses of a storage technology by its stored and released power within a timestep times the duration of the timestep.
-    @constraint(model, eOperationCostS, OCs == sum((data.CostOperationConvCT[ct, i_current_year] * powerCT[t, b, ct] * data.dt) for t in 1:n_timesteps, b in 1:n_buses, ct in 1:n_conversion_technologies) + sum((data.CostOperationVarST[st, i_current_year] * storedST[t, b, st] * data.dt) for t in 1:n_timesteps, b in 1:n_buses, st in 1:n_storage_technologies))
+    @constraint(model, eOperationCostS, OCs == sum((data.CostOperationConvCT[ct, i_current_year] * powerCT[t, b, ct] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) + sum((data.CostOperationVarST[st, i_current_year] * storedST[t, b, st] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies))
 
 
     # the yearly operational cost of power lines
     # Calculated by multiplying the operational expenses of a power line by its transported power in both directions within a timestep times the duration of the timestep.
-    @constraint(model, eOperationCostL, OCl == sum((data.CostOperationVarL[l] * (powerLpos[t, l] + powerLneg[t, l]) * data.dt) for t in 1:n_timesteps, l in 1:n_lines))
+    @constraint(model, eOperationCostL, OCl == sum((data.CostOperationVarL[l] * (powerLpos[t, l] + powerLneg[t, l]) * data.dt) for t in 1:data.n_timesteps, l in 1:data.n_lines))
 
 
     # other yearly operational costs
     # Calculated as the sum of different penalty costs. Those are the costs of unserved power and spilled power, as well as ficticious power flows. Additionally it contais the coal power ramping penalties.
     # TODO: why is qfictitious not multiplied by data.dt as the rest??
-    @constraint(model, eOperationCostO, OCo == sum((data.costUnserved * powerunserved[t, b] * data.dt) for t in 1:n_timesteps, b in 1:n_buses) + sum((data.costSpilled * powerspilled[t, b] * data.dt) for t in 1:n_timesteps, b in 1:n_buses) + sum((data.costFictitiousFlows * qfictitious[t, h]) for t in 1:n_timesteps, h in 1:data.n_hydro_generators) + sum( data.costRampsCoal_hourly * (rampsCoalHourlyPos(t, b) + rampsCoalHourlyNeg(t, b)) for t in 1:data.n_timesteps, b in 1:data.n_buses) + sum( data.costRampsCoal_daily * (rampsCoalDailyPos(t, b) + rampsCoalDailyNeg(t, b)) for t in 1:data.n_timesteps, b in 1:data.n_buses) )
+    @constraint(model, eOperationCostO, OCo == sum((data.costUnserved * powerunserved[t, b] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses) + sum((data.costSpilled * powerspilled[t, b] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses) + sum((data.costFictitiousFlows * qfictitious[t, h]) for t in 1:data.n_timesteps, h in 1:data.n_hydro_generators) + sum( data.costRampsCoal_hourly * (rampsCoalHourlyPos(t, b) + rampsCoalHourlyNeg(t, b)) for t in 1:data.n_timesteps, b in 1:data.n_buses) + sum( data.costRampsCoal_daily * (rampsCoalDailyPos(t, b) + rampsCoalDailyNeg(t, b)) for t in 1:data.n_timesteps, b in 1:data.n_buses) )
 
 
     # yearly fixed operational costs of storage
@@ -93,6 +93,7 @@ function add_model_constraints(model::JuMP.Model, config::AbstrConfiguration, da
     @constraint(model, eInvestmentCostH, ICh == sum((data.costCapUpgradeH[h] * 1000 * pH[h]) for h in 1:data.n_hydro_generators) )
 
 
+    # TODO: remove this after code review
     # The following equation has not been implemented. GAMS code was:
     # eInvestmentCostO     .. ICo =e= 0;
 
@@ -142,13 +143,15 @@ function add_model_constraints(model::JuMP.Model, config::AbstrConfiguration, da
     # Calculated by adding total investment and operational costs and carbon tax
     @constraint(model, eTotalCost, TotalCost == ICt + OCt + costGHG)
 
+
+    # TODO: remove this after code review
     # The following equation has not been implemented. GAMS code was:
     # eObjectiveFunction:single objective function (costs)
     # eObjectiveFunction     .. Z =e= TCosts;
 
 
 #=
-TODO: those LCA equations...
+TODO: those 5 LCA equations and constraints...
 Multiobjective with LCA
 
 eOpTLCA(ic)                      ..OpTLCA(ic)=e=
@@ -175,7 +178,7 @@ eEpsilonTLCA(ic)                 ..TotalLCA(ic)=l=EpsilonLCA(ic);
     @constraint(model, [t in 1:n_timesteps], powerG[t,:,:] .<= 1000 .* pG .+ pexistingG )
 
 
-    #equation removed. Already in variable definition. Old version of it additionally doesnt make a lot of sense (see variable bounds of pG)
+    # equation removed. Already in variable definition. Old version of it additionally doesnt make a lot of sense (see variable bounds of pG)
     # ePMinG(t,b,g)      .. powerG(t,b,g) =g= 0; //PMinG(g)*pG(b,g); Pmin deactivated
 
 
@@ -207,7 +210,7 @@ eEpsilonTLCA(ic)                 ..TotalLCA(ic)=l=EpsilonLCA(ic);
 
 #=
 TODO: these bounds for the coal ramping.
-BUT: are they even needed? since powerG should be limited? (but i didnt see that just yet...)
+BUT: are they even needed? since powerG is limited by 1000* pG + PexistingG
 eRampsCoal1(t,b)                      ..rampsAuxCoal1(t,b) =l=PexistingG(b,'g1');
 eRampsCoal2(t,b)                      ..rampsAuxCoal2(t,b) =l=PexistingG(b,'g1');
 eRampsCoal3(t,b)                      ..rampsAuxCoal3(t,b) =l=PexistingG(b,'g1');
@@ -230,10 +233,10 @@ eRampsCoal4(t,b)                      ..rampsAuxCoal4(t,b) =l=PexistingG(b,'g1')
     @constraint(model, eEnergySpilledMax, sum(powerspilled[t, b] for t in 1:data.n_timesteps, b in 1:data.n_buses) <= data.energyCurtailedMax * sum(data.profilesR[t, b, r] * (1000 * pR[b, r] + data.pexistingR[b, r, i_current_year]) for t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators) )
 
 
-#=
-TODO: what the hell did this equation even do?
-eEqualInstallpR(b,r,rr)        .. pR(b,r)$(TechnologyR(r) eq TechnologyR(rr))=e= pR(b,rr)$(TechnologyR(r) eq TechnologyR(rr));
-=#
+    # building renewables are independent from their profile
+    # the newly built capacity of a renewable energy r in a bus b has to be the same for all equal renewable energies r.
+    # This is due to the fact that eg. solar or wind have multiple profiles per node, but one cannot built on one specifiv profile, but has to build uniformaly on all of them.
+    @constraint(model, [r in 1:data.n_ren_generators, rr in 1:data.n_ren_generators, b in 1:data.n_buses; data.technologyR[r] == data.technologyR[rr] ], pR[b, r] == pR[b, rr] )
 
 
     # limit CSP (concentrated solar power) power production
