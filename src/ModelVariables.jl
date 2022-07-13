@@ -31,7 +31,7 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
     @variable(model, powerRoR[1:data.n_timesteps, 1:data.n_ror_generators] >= 0)
 
     # (t,b,ct) power delivered or consumed by conversion technology ct in bus b during timestep t [MW (thermal)]
-    @variable(model, powerCT[1:n_timesteps, 1:data.n_buses, 1:data.n_conversion_technologies] >= 0)
+    @variable(model, powerCT[1:data.n_timesteps, 1:data.n_buses, 1:data.n_conversion_technologies] >= 0)
 
     # (t,b,r) power produced from renewables generator r in bus b during timestep t (equal to available profile)
     @variable(model, powerR[1:data.n_timesteps, 1:data.n_buses, 1:data.n_ren_generators] >= 0)
@@ -194,8 +194,9 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
 
     # (l) built capacity of transmission line l in [GW]
     @variable(model, pL[1:data.n_lines] >= 0)
+    # TODO: this is addressed in the constraints routines. The reason is the dependency of capLExisting on the current year.
     # upper bound given by not yet realized capacity expansion (max - existing) adjusted from MW to GW
-    set_upper_bound.(pL, (data.maxCapacityPotL - data.capLExisting) / 1000)
+    #set_upper_bound.(pL, (data.maxCapacityPotL - data.capLExisting) / 1000)
 
     # (b,ct) built storage converters ct in bus b in [GW]
     @variable(model, pCT[1:data.n_buses, 1:data.n_conversion_technologies])

@@ -417,7 +417,7 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
 
     # upper limit for building transmission lines
     # TODO: this should already exist as variable bound of pL
-    #@constraint(model, [l in 1:data.n_lines], pL[l] <= (data.maxCapacityPotL[l] - data.capLExisting[l, i_current_year]) / 1000 )
+    @constraint(model, [l in 1:data.n_lines], pL[l] <= (data.maxCapacityPotL[l] - data.capLExisting[l, i_current_year]) / 1000 )
 
 
     # upper limit for transmission line throughput (positive direction)
