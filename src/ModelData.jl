@@ -100,8 +100,8 @@ struct ModelData
     costReserveG::Array{Float64, 1}
     # (g, y) Lifetime of the generator g built in year y [years]
     lifetimeG::Array{Int64, 2}
-    # (g) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost of generator g within its lifetime [unitless]
-    annuityG::Array{Float64, 1}
+    # (g, y) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost of generator g within its lifetime [unitless]
+    annuityG::Array{Float64, 2}
     # (g) min bound: minimum capacity of to-be-installed conventional generator g [MW]
     pMinG::Array{Float64, 1}
     # (g) max bound: maximum capacity of to-be-installed conventional generator g [MW]
@@ -134,8 +134,8 @@ struct ModelData
     costOperationFixR::Array{Float64, 2}
     # (r, y) Lifetime of the renewable generator r built in year y [year]
     lifetimeR::Array{Int64, 2}
-    # (r) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of renewable generator [unitless]
-    annuityR::Array{Float64, 1}
+    # (r, y) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of renewable generator [unitless]
+    annuityR::Array{Float64, 2}
     # (r) type of renewable generation ∈[Wind, SolarPV, RoR, Geothermal, Biomass, Biogas]
     technologyR::Array{String, 1}
     # (t,b,r) hourly (t) factor ∈[0,1] of generation profile of renewable generator r in bus b [unitless]
@@ -165,8 +165,8 @@ struct ModelData
     costOperationConvCT::Array{Float64, 2}
     # (ct, y) Lifetime of the conversion technology ct built in year y [years]
     lifetimeCT::Array{Int64, 2}
-    # (ct) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of conversion technology ct [unitless]
-    annuityCT::Array{Float64, 1}
+    # (ct, y) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of conversion technology ct [unitless]
+    annuityCT::Array{Float64, 2}
     # TODO: capacity, Power or energy reserves?  GAMS comment: cost of reserves ($\MW)or ($\MWh)
     # (ct) cost of conversion technology ct's capacity reserves [Dollar per MW]
     costReserveCT::Array{Float64, 1}
@@ -206,8 +206,8 @@ struct ModelData
     costOperationFixST::Array{Float64, 2}
     # (st, y) Lifetime of the conversion technology st built in year y [years]
     lifetimeST::Array{Int64, 2}
-    # (st) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of storage technology [unitless]
-    annuityST::Array{Float64, 1}
+    # (st, y) Annuity; fracton ∈[0,1] of loan to be paid back every year repay capital cost within lifetime of storage technology [unitless]
+    annuityST::Array{Float64, 2}
     # TODO: GAMS: (% of GWh_ins); but why Giga here when everything else is in MWh?? aso is it really in % or just factor??
     # (st) min storage level of storage technology st [% of installed GWh]
     vMinST::Array{Float64, 1}
@@ -451,7 +451,7 @@ struct ModelData
                         costOperationFixG::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         costReserveG::Array{Float64, 1} = [0.0],
                         lifetimeG::Array{Int64, 2} = zeros(Int64, (1, 1)),
-                        annuityG::Array{Float64, 1} = [0.0],
+                        annuityG::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         pMinG::Array{Float64, 1} = [0.0],
                         pMaxG::Array{Float64, 1} = [0.0],
                         minFossilGeneration::Float64 = 0.0,
@@ -464,7 +464,7 @@ struct ModelData
                         costOperationVarR::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         costOperationFixR::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         lifetimeR::Array{Int64, 2} = zeros(Int64, (1, 1)),
-                        annuityR::Array{Float64, 1} = [0.0],
+                        annuityR::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         technologyR::Array{String, 1} = ["0.0"],
                         profilesR::Array{Float64, 3} = zeros(Float64, (1,1,1)),
                         minCapacityPotR::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
@@ -475,7 +475,7 @@ struct ModelData
                         costOperationFixCT::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         costOperationConvCT::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         lifetimeCT::Array{Int64, 2} = zeros(Int64, (1, 1)),
-                        annuityCT::Array{Float64, 1} = [0.0],
+                        annuityCT::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         costReserveCT::Array{Float64, 1} = [0.0],
                         conversionFactorCT::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         conversionEfficiencyCT::Array{Float64, 2} = zeros(Float64, (1, 1)),
@@ -490,7 +490,7 @@ struct ModelData
                         costOperationVarST::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         costOperationFixST::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         lifetimeST::Array{Int64, 2} = zeros(Int64, (1, 1)),
-                        annuityST::Array{Float64, 1} = [0.0],
+                        annuityST::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         vMinST::Array{Float64, 1} = [0.0],
                         lossesST::Array{Float64, 1} = [0.0],
                         minVolumePotST::Array{Float64, 1} = [0.0],
