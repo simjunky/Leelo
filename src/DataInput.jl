@@ -126,6 +126,14 @@ function read_model_data()::ModelData
     n_conversion_technologies = nrow(converter_data)
     n_storage_technologies = nrow(storage_data)
 
+
+
+    my_interest_rate = scenario_setting_data[1, :interest_rate]
+    my_lifetimeG = Matrix{Int64}(conv_generator_data[!, Symbol.("LifetimeGy" .* string.(years))])
+    my_lifetimeR = Matrix{Int64}(ren_generator_data[!, Symbol.("LifetimeRy" .* string.(years))])
+    my_lifetimeCT = Matrix{Int64}(converter_data[!, Symbol.("LifetimeCTy" .* string.(years))])
+    my_lifetimeST = Matrix{Int64}(storage_data[!, Symbol.("LifetimeSTy" .* string.(years))])
+    my_lifetimeL = transmission_data[!, :LifetimeL]
     my_pexistingG = zeros(Float64, (n_buses, n_conv_generators, n_years))
     my_pexistingR = zeros(Float64, (n_buses, n_ren_generators, n_years))
     my_pexistingCT = zeros(Float64, (n_buses, n_conversion_technologies, n_years))
@@ -153,7 +161,7 @@ function read_model_data()::ModelData
 
     # TODO: keep replacing placeholder-zeros with real values
 
-    model_data = ModelData(interest_rate =  scenario_setting_data[1, :interest_rate],
+    model_data = ModelData(interest_rate =  my_interest_rate,
                         n_years = scenario_setting_data[1, :n_years],
                         years = collect(range(scenario_setting_data[1, :starting_year], length = scenario_setting_data[1, :n_years], step = scenario_setting_data[1, :year_timestep])),
                         dt = Float64(scenario_setting_data[1, :timestep_length]),
@@ -175,8 +183,8 @@ function read_model_data()::ModelData
                         costOperationVarG = Matrix{Float64}(conv_generator_data[!,Symbol.("CostOperationVarGy".*string.(years))]),
                         costOperationFixG = Matrix{Float64}(conv_generator_data[!,Symbol.("CostOperationFixGy".*string.(years))]),
                         costReserveG = [0.0], #TODO: remove since its excluded (also remove everywhere else then) conv_generator_data[!, :CostReserveG],
-                        lifetimeG = Matrix{Int64}(conv_generator_data[!,Symbol.("LifetimeGy".*string.(years))]),
-                        annuityG = [0.0], #TODO: remove  conv_generator_data[!, :AnnuityG],
+                        lifetimeG = my_lifetimeG,
+                        annuityG = ((1 + my_interest_rate).^my_lifetimeG .* my_interest_rate)./((1 + my_interest_rate).^my_lifetimeG .- 1),
                         pMinG = conv_generator_data[!, :PMinG],
                         pMaxG = conv_generator_data[!, :PMaxG],
                         minFossilGeneration = scenario_setting_data[1, :MinFossilShare],
@@ -188,8 +196,8 @@ function read_model_data()::ModelData
                         costCapR = Matrix{Float64}(ren_generator_data[!,Symbol.("CostCapRy".*string.(years))]),
                         costOperationVarR = Matrix{Float64}(ren_generator_data[!,Symbol.("CostOperationVarRy".*string.(years))]),
                         costOperationFixR = Matrix{Float64}(ren_generator_data[!,Symbol.("CostOperationFixRy".*string.(years))]),
-                        lifetimeR = Matrix{Int64}(ren_generator_data[!,Symbol.("LifetimeRy".*string.(years))]),
-                        annuityR = [0.0], #TODO: remove and fill otherwise #old: ren_generator_data[!, :AnnuityR],
+                        lifetimeR = my_lifetimeR,
+                        annuityR = ((1 + my_interest_rate).^my_lifetimeR .* my_interest_rate)./((1 + my_interest_rate).^my_lifetimeR .- 1),
                         technologyR = ren_generator_data[!, :Tech],
                         profilesR = my_profilesR,
                         minCapacityPotR = Matrix{Float64}(ren_generator_data[!,Symbol.("minCapacityPotRb" .* string.(collect(1:n_buses)))]),
@@ -199,8 +207,8 @@ function read_model_data()::ModelData
                         costCapCT = Matrix{Float64}(converter_data[!, Symbol.("CostCapCTy" .* string.(years))]),
                         costOperationFixCT = Matrix{Float64}(converter_data[!, Symbol.("CostOperationFixCTy" .* string.(years))]),
                         costOperationConvCT = Matrix{Float64}(converter_data[!, Symbol.("CostOperationConvCTy" .* string.(years))]),
-                        lifetimeCT = Matrix{Int64}(converter_data[!, Symbol.("LifetimeCTy" .* string.(years))]),
-                        annuityCT = [0.0], #TODO replace/remove
+                        lifetimeCT = my_lifetimeCT,
+                        annuityCT = ((1 + my_interest_rate).^my_lifetimeCT .* my_interest_rate)./((1 + my_interest_rate).^my_lifetimeCT .- 1),
                         costReserveCT = converter_data[!, :CostReserveCT],
                         conversionFactorCT = Matrix{Float64}(converter_data[!, Symbol.("ConversionFactorCTy" .* string.(years))]),
                         conversionEfficiencyCT = Matrix{Float64}(converter_data[!, Symbol.("ConversionEfficiencyCTy" .* string.(years))]),
@@ -214,8 +222,8 @@ function read_model_data()::ModelData
                         costCapST = Matrix{Float64}(storage_data[!, Symbol.("CostCapSTy" .* string.(years))]),
                         costOperationVarST = Matrix{Float64}(storage_data[!, Symbol.("CostOperationVarSTy" .* string.(years))]),
                         costOperationFixST = Matrix{Float64}(storage_data[!, Symbol.("CostOperationFixSTy" .* string.(years))]),
-                        lifetimeST = Matrix{Int64}(storage_data[!, Symbol.("LifetimeSTy" .* string.(years))]),
-                        annuityST = [0.0], # TODO: replace/remove
+                        lifetimeST = my_lifetimeST,
+                        annuityST = ((1 + my_interest_rate).^my_lifetimeST .* my_interest_rate)./((1 + my_interest_rate).^my_lifetimeST .- 1),
                         vMinST = storage_data[!, :VMinST],
                         lossesST = storage_data[!, :LossesST],
                         minVolumePotST = [0.0], # TODO
@@ -254,8 +262,8 @@ function read_model_data()::ModelData
                         costCapL = (transmission_data[!, :Length] .* transmission_data[!, :CapExLines] .+ transmission_data[!, :CapExConverters]),
                         costOperationFixL = (transmission_data[!, :Length] .* transmission_data[!, :OpExFixLines] .+ transmission_data[!, :OpExFixConverters]),
                         costOperationVarL = (transmission_data[!, :Length] .* transmission_data[!, :OpExVarLines] .+ transmission_data[!, :OpExVarConverters]),
-                        lifetimeL = transmission_data[!, :LifetimeL],
-                        annuityL = [0.0], # TODO: calculate from lifetime
+                        lifetimeL = my_lifetimeL,
+                        annuityL = ((1 + my_interest_rate).^my_lifetimeL .* my_interest_rate)./((1 + my_interest_rate).^my_lifetimeL .- 1),
                         demand = my_demand,
                         autonomyDays = Float64(scenario_setting_data[1, :AutonomyDays]),
                         costAutonomy = scenario_setting_data[1, :CostAutonomy],
