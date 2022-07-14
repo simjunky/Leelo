@@ -339,8 +339,8 @@ struct ModelData
     reserveFUsedRatio::Float64
     # ratio between offered and used operational reserve (impact on volume balance)
     reserveOUsedRatio::Float64
-    # (b)         max demand in each zone throughout entire time period
-    peakLoad::Array{Float64, 1}
+    # (b, y)         max demand in each zone throughout entire time period
+    peakLoad::Array{Float64, 2}
 
 
 
@@ -541,7 +541,7 @@ struct ModelData
                         reserveFast::Float64 = 0.0,
                         reserveFUsedRatio::Float64 = 0.0,
                         reserveOUsedRatio::Float64 = 0.0,
-                        peakLoad::Array{Float64, 1} = [0.0],
+                        peakLoad::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         costUnserved::Float64 = 0.0,
                         costSpilled::Float64 = 0.0,
                         costFictitiousFlows::Float64 = 0.0,
