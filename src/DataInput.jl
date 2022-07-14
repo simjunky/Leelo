@@ -287,7 +287,7 @@ function read_model_data()::ModelData
                         runningCosts = Float64(scenario_setting_data[1, :RunningCost]),
                         epsilonTransmission = Float64(scenario_setting_data[1, :EpsilonTransmission]),
                         epsilonGHG = Float64(scenario_setting_data[1, :EpsilonGHG]),
-                        carbonTax = Float64(scenario_setting_data[1, :CarbonTax]),
+                        carbonTax = Matrix{Float64}(scenario_setting_data[1, Symbol.("CarbonTaxy" .* string(years))]),
                         GHGupstreamR = ren_generator_data[!, :GHGupstreamR],
                         GHGdownstreamR = ren_generator_data[!, :GHGdownstreamR],
                         GHGOperationR = ren_generator_data[!, :GHGOperationR],

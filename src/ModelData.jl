@@ -358,8 +358,8 @@ struct ModelData
     epsilonTransmission::Float64
     # limit on GHG
     epsilonGHG::Float64
-    # tax for GHG (euros per ton of CO2)
-    carbonTax::Float64
+    # (y) tax for GHG (euros per ton of CO2)
+    carbonTax::Array{Float64, 1}
     # (r)     GHG emissions factor during construction of r(kg.CO2 per MWh)
     GHGupstreamR::Array{Float64, 1}
     # (r)     GHG emissions factor during demolition of r (kg.CO2 per MWh)
@@ -548,7 +548,7 @@ struct ModelData
                         runningCosts::Float64 = 0.0,
                         epsilonTransmission::Float64 = 0.0,
                         epsilonGHG::Float64 = 0.0,
-                        carbonTax::Float64 = 0.0,
+                        carbonTax::Array{Float64, 1} = [0.0],
                         GHGupstreamR::Array{Float64, 1} = [0.0],
                         GHGdownstreamR::Array{Float64, 1} = [0.0],
                         GHGOperationR::Array{Float64, 1} = [0.0],
