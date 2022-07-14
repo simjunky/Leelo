@@ -20,6 +20,7 @@ Problems or inconsistencies found in old, `GAMS`-implemented LEELO version. Prob
 10. Why is the `CostOperationFixL` in Excels `InputsL` a) in k-Euro/MW and b) rounded to full euros (ok, its just the view, not the Data.)? Or other point on this Excel-Sheet: Why is so much calculated within Excel? and not by the programm, which would reduce the number of inputs and thereby comlexity for the user.
 11. Is Excels `InputsH`'s `Pmin(Data)` even used (seems as not) and what is the difference to `PMinH`?
 12. Why is there a need for an auxiliary ROR generator? (same with the dummy H)
+13. `EpsiolHydropeaking` and `EpsilonPMatter` (from Settings Excel) are seemingly unused?
 
 
 ## Open questions
@@ -36,6 +37,7 @@ Questions related to the understanding.
 8. Why is there an extra CSP profile? shouldnt it follow the regular solar profile?
 9. Why are there still ROR within `InputsR` when they have a profile of 0 and instead are now in their own section?
 10. Why is Coal ramping daily using a 12h timeframe instead of 24h?
+11. Reserve Variables: How does frequency reserve work?
 
 
 ## Big To-Do's
@@ -49,3 +51,4 @@ Some bigger To-Do's to keep in mind and not hide within the code.
 5. in `DataInput.jl` all `XLSX` files get accessed using their sheet called `Tabelle1` ⇒ change to english? Or is there a way to say "first"?
 6. All the impact categories shit... from Dataimport to variables to constraints etc...
 7. `GHGOperationCT` is an input parameter that does not seem to have a corresponding model parameter...?
+8. `etaH` in Hydrocascades does not seem to have a corresponding model parameter...?
