@@ -5,7 +5,7 @@ docstring of this function
 
     ... right now just all variables independent of actual config...
 """
-function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
+function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data::ModelData, i_current_year::Int64)
 
     # TODO: remove line when finished
     @info "add_model_variables() called"
@@ -183,7 +183,7 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
     # lower bound given by positivity condition and  minimal capacity adjusted from MW to GW
     set_lower_bound.(pR, max.(data.minCapacityPotR / 1000, 0.0))
     # upper bound given by not yet existing capacity (max - existing) adjusted from MW to GW
-    set_upper_bound.(pR, (data.maxCapacityPotR - data.pexistingR) / 1000)
+    set_upper_bound.(pR, (data.maxCapacityPotR - data.pexistingR[:, :, i_current_year]) / 1000)
 
     # (b,g) built generators in bus b in [GW]
     @variable(model, pG[1:data.n_buses, 1:data.n_conv_generators])
@@ -203,7 +203,7 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
     # lower bound given by positivity condition and  minimal capacity adjusted from MW to GW
     set_lower_bound.(pCT, max.(data.minCapacityPotCT / 1000, 0.0))
     # upper bound given by not yet existing capacity (max - existing) adjusted from MW to GW
-    set_upper_bound.(pCT, (data.maxCapacityPotCT - data.pexistingCT) / 1000)
+    set_upper_bound.(pCT, (data.maxCapacityPotCT - data.pexistingCT[:, :, i_current_year]) / 1000)
 
     # (b,st) built storage energy capacity st in bus b in [GW]
     @variable(model, eST[1:data.n_buses, 1:data.n_storage_technologies])
@@ -211,12 +211,12 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
     set_lower_bound.(eST, max.(data.minVolumePotST / 1000, 0.0))
     # upper bound given by not yet existing volume (max - existing) adjusted from MW to GW
     # TODO: check if the upper bound here is ok since vExistingST depends on curret year...
-    set_upper_bound.(eST, (data.maxVolumePotST - data.vExistingST) / 1000)
+    set_upper_bound.(eST, (data.maxVolumePotST - data.vExistingST[:, :, i_current_year]) / 1000)
 
     # (h) new(added) capacity of hydropower plant h in [GW]
     @variable(model, pH[1:data.n_hydro_generators] >= 0)
     # upper bound given by not yet realized capacity expansion (max - existing) adjusted from MW to GW
-    set_upper_bound.(pH, (data.pMaxH - data.pExistingH) / 1000)
+    set_upper_bound.(pH, (data.pMaxH - data.pexistingH[:, i_current_year]) / 1000)
 
 
 
