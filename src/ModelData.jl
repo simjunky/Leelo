@@ -214,10 +214,10 @@ struct ModelData
     # TODO: are above and below really in % or just a factor?
     # (st) energy leakage;losses of storage technology st over time [% per 24h]
     lossesST::Array{Float64, 1}
-    # (b,st) minimum capacity of storage technology st to be installed in bus b [MW]
-    minVolumePotST::Array{Float64, 1}
-    # (b,st) maximum capacity of storage technology st to be installed in bus b [MW]
-    maxVolumePotST::Array{Float64, 1}
+    # (b, st) minimum capacity of storage technology st to be installed in bus b [MW]
+    minVolumePotST::Array{Float64, 2}
+    # (b, st) maximum capacity of storage technology st to be installed in bus b [MW]
+    maxVolumePotST::Array{Float64, 2}
     # TODO: reformulate text
     # (st) maximum ratio between Energy and Power capacity [unitless]
     energy2PowerRatioMax::Array{Float64, 1}
@@ -493,8 +493,8 @@ struct ModelData
                         annuityST::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         vMinST::Array{Float64, 1} = [0.0],
                         lossesST::Array{Float64, 1} = [0.0],
-                        minVolumePotST::Array{Float64, 1} = [0.0],
-                        maxVolumePotST::Array{Float64, 1} = [0.0],
+                        minVolumePotST::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
+                        maxVolumePotST::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         energy2PowerRatioMax::Array{Float64, 1} = [0.0],
                         energy2PowerRatioMin::Array{Float64, 1} = [0.0],
                         cyclesST::Array{Int64, 1} = [0.0],
