@@ -293,7 +293,7 @@ function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data
     @variable(model, CostGHG)
 
     # total costs
-    @variable(model, TCosts >= 0)
+    @variable(model, TotalCost >= 0)
 
     # total transmission
     @variable(model, TTransmission >= 0)

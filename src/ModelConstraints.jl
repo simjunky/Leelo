@@ -1,45 +1,10 @@
 
 # TODO: rewrite docstring
-# Complete constraint creation
-"""
-This is currently the function called to add all constraints to the model
-"""
-function add_model_constraints(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
-
-    # TODO: remove unneeded outputs
-    @info "add_model_constraints() called"
-
-    for y in 1:data.n_years
-        add_yearly_constraints(model, config, data, y)
-        if y < data.n_years
-            add_transition_constraints(model, config, data, y, y+1)
-        end
-    end
-
-    return nothing
-end
-
-
-# TODO: rewrite docstring
-# Constraint creation for transition in between years
-"""
-This is currently the function called to add constraints to the model to handle the change in between years
-"""
-function add_transition_constraints(model::JuMP.Model, config::AbstrConfiguration, data::ModelData, i_past_year::Int64, i_future_year::Int64)
-
-    # TODO: remove unneeded outputs
-    @info "add_transition_constraints() called for " * string(i_past_year) * " to " * string(i_future_year)
-
-    return nothing
-end
-
-
-# TODO: rewrite docstring
 # Constraint creation for one specific year
 """
 This is currently the function called to add constraints to the model for the computation for one given year.
 """
-function add_yearly_constraints(model::JuMP.Model, config::AbstrConfiguration, data::ModelData, i_current_year::Int64)
+function add_model_constraints(model::JuMP.Model, config::AbstrConfiguration, data::ModelData, i_current_year::Int64)
 
     # TODO: remove unneeded outputs
     @info "add_yearly_constraints() called for " * string(i_current_year)
@@ -50,74 +15,106 @@ function add_yearly_constraints(model::JuMP.Model, config::AbstrConfiguration, d
 
     # the yearly operational cost of renewable power generation
     # Calculated by multiplying the operational expenses of a renewable generator by its produced power within a timestep times the duration of the timestep.
-    @constraint(model, eOperationCostR, OCr == sum((data.CostOperationVarR[r, i_current_year] * powerR[t, b, r] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators))
+    OCr = model[:OCr]
+    powerR = model[:powerR]
+    @constraint(model, eOperationCostR, OCr == sum((data.costOperationVarR[r, i_current_year] * powerR[t, b, r] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators))
 
 
     # the yearly operational cost of conventional power generators
     # Calculated by multiplying the operational expenses of a conventional generator by its produced power within a timestep times the duration of the timestep.
-    @constraint(model, eOperationCostR, OCg == sum((data.CostOperationVarG[g, i_current_year] * powerG[t, b, g] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators))
+    OCg = model[:OCg]
+    powerG = model[:powerG]
+    @constraint(model, eOperationCostG, OCg == sum((data.costOperationVarG[g, i_current_year] * powerG[t, b, g] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators))
 
 
     # the yearly operational cost of energy storage
     # It is the sum of the operational cost of storage technologies and of conversion technologies.
     # The operational cost of conversion technologies is calculated by multiplying the operational expenses of a convention technology by its produced power within a timestep times the duration of the timestep.
     # The operational cost of storage technologies is calculated by multiplying the operational expenses of a storage technology by its stored and released power within a timestep times the duration of the timestep.
-    @constraint(model, eOperationCostS, OCs == sum((data.CostOperationConvCT[ct, i_current_year] * powerCT[t, b, ct] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) + sum((data.CostOperationVarST[st, i_current_year] * storedST[t, b, st] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies))
+    OCs = model[:OCs]
+    powerCT = model[:powerCT]
+    storedST = model[:storedST]
+    @constraint(model, eOperationCostS, OCs == sum((data.costOperationConvCT[ct, i_current_year] * powerCT[t, b, ct] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) + sum((data.costOperationVarST[st, i_current_year] * storedST[t, b, st] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies))
 
 
     # the yearly operational cost of power lines
     # Calculated by multiplying the operational expenses of a power line by its transported power in both directions within a timestep times the duration of the timestep.
-    @constraint(model, eOperationCostL, OCl == sum((data.CostOperationVarL[l] * (powerLpos[t, l] + powerLneg[t, l]) * data.dt) for t in 1:data.n_timesteps, l in 1:data.n_lines))
+    OCl = model[:OCl]
+    powerLpos = model[:powerLpos]
+    powerLneg = model[:powerLneg]
+    @constraint(model, eOperationCostL, OCl == sum((data.costOperationVarL[l] * (powerLpos[t, l] + powerLneg[t, l]) * data.dt) for t in 1:data.n_timesteps, l in 1:data.n_lines))
 
 
     # other yearly operational costs
     # Calculated as the sum of different penalty costs. Those are the costs of unserved power and spilled power, as well as ficticious power flows. Additionally it contais the coal power ramping penalties.
     # TODO: why is qfictitious not multiplied by data.dt as the rest??
-    @constraint(model, eOperationCostO, OCo == sum((data.costUnserved * powerunserved[t, b] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses) + sum((data.costSpilled * powerspilled[t, b] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses) + sum((data.costFictitiousFlows * qfictitious[t, h]) for t in 1:data.n_timesteps, h in 1:data.n_hydro_generators) + sum( data.costRampsCoal_hourly * (rampsCoalHourlyPos(t, b) + rampsCoalHourlyNeg(t, b)) for t in 1:data.n_timesteps, b in 1:data.n_buses) + sum( data.costRampsCoal_daily * (rampsCoalDailyPos(t, b) + rampsCoalDailyNeg(t, b)) for t in 1:data.n_timesteps, b in 1:data.n_buses) )
+    OCo = model[:OCo]
+    powerunserved = model[:powerunserved]
+    powerspilled = model[:powerspilled]
+    qfictitious = model[:qfictitious]
+    rampsCoalHourlyPos = model[:rampsCoalHourlyPos]
+    rampsCoalHourlyNeg = model[:rampsCoalHourlyNeg]
+    rampsCoalDailyPos = model[:rampsCoalDailyPos]
+    rampsCoalDailyNeg = model[:rampsCoalDailyNeg]
+    @constraint(model, eOperationCostO, OCo == sum((data.costUnserved * powerunserved[t, b] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses) + sum((data.costSpilled * powerspilled[t, b] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses) + sum((data.costFictitiousFlows * qfictitious[t, h]) for t in 1:data.n_timesteps, h in 1:data.n_hydro_generators) + sum( data.costRampsCoal_hourly * (rampsCoalHourlyPos[t, b] + rampsCoalHourlyNeg[t, b]) for t in 1:data.n_timesteps, b in 1:data.n_buses) + sum( data.costRampsCoal_daily * (rampsCoalDailyPos[t, b] + rampsCoalDailyNeg[t, b]) for t in 1:data.n_timesteps, b in 1:data.n_buses) )
 
 
     # yearly fixed operational costs of storage
     # in k€
     # TODO: probably in k$ and not €... ?
     # Calculated as the sum of the yearly fixed operating costs of storages and conversion technologies, which depend on the preexisting and newly installed capacities.
-    @constraint(model, eOperationCostFixedS, OCfs == sum((data.costOperationFixST[st, i_current_year] * (1000 * eST[b, st] + data.vExistingST[b, st, i_current_year])) for b in 1:data.n_buses, st in 1:data.n_storage_technologies) + sum((data.costOperationFixCT[ct, i_current_year] * (1000 * pCT[b, ct] + data.pexistingCT[b, st, i_current_year])) for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) )
+    OCfs = model[:OCfs]
+    eST = model[:eST]
+    pCT = model[:pCT]
+    @constraint(model, eOperationCostFixedS, OCfs == sum((data.costOperationFixST[st, i_current_year] * (1000 * eST[b, st] + data.vExistingST[b, st, i_current_year])) for b in 1:data.n_buses, st in 1:data.n_storage_technologies) + sum((data.costOperationFixCT[ct, i_current_year] * (1000 * pCT[b, ct] + data.pexistingCT[b, ct, i_current_year])) for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) )
 
 
     # yearly fixed operational costs of conventional, renewable, hydro and run-of-river power generation and transmission lines
     # in k€
     # TODO: probably in k$ and not €... ?
     # Calculated as the sum of the yearly fixed operating costs of storages and conversion technologies, which depend on the preexisting and newly installed capacities.
-    @constraint(model, eOperationCostFixedS, OCfs == sum((data.costOperationFixG[g, i_current_year] * (1000 * pG[b, g] + data.pexistingG[b, st, i_current_year])) for b in 1:data.n_buses, g in 1:data.n_conv_generators) + sum((data.costOperationFixR[r, i_current_year] * (1000 * pR[b, r] + data.pexistingR[b, r, i_current_year])) for b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum((data.costOperationFixH[h] * (1000 * pH[h] + data.pexistingH[h, i_current_year])) for h in 1:data.n_hydro_generators) + sum((data.costOperationFixRoR[ror] * data.pMaxRoR[ror]) for ror in 1:data.n_ror_generators) + sum((data.costOperationFixL[l] * (1000 * pL[l] + data.capLExisting[l, i_current_year])) for l in 1:data.n_lines) )
+    OCfo = model[:OCfo]
+    pG = model[:pG]
+    pR = model[:pR]
+    pH = model[:pH]
+    pL = model[:pL]
+    @constraint(model, eOperationCostFixedO, OCfo == sum((data.costOperationFixG[g, i_current_year] * (1000 * pG[b, g] + data.pexistingG[b, g, i_current_year])) for b in 1:data.n_buses, g in 1:data.n_conv_generators) + sum((data.costOperationFixR[r, i_current_year] * (1000 * pR[b, r] + data.pexistingR[b, r, i_current_year])) for b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum((data.costOperationFixH[h] * (1000 * pH[h] + data.pexistingH[h, i_current_year])) for h in 1:data.n_hydro_generators) + sum((data.costOperationFixRoR[ror] * data.pMaxRoR[ror]) for ror in 1:data.n_ror_generators) + sum((data.costOperationFixL[l] * (1000 * pL[l] + data.capLExisting[l, i_current_year])) for l in 1:data.n_lines) )
 
 
     # yearly total operational costs
     # in Dollar
     # Calculated as the sum of all precalculated operational costs
-    @constraint(model, eOperationCostT, OCfs == OCr + OCg + OCs + OCl + OCo + (1000 * OCfo) + (OCfs * 1000) )
+    OCt = model[:OCt]
+    @constraint(model, eOperationCostT, OCt == OCr + OCg + OCs + OCl + OCo + (1000 * OCfo) + (OCfs * 1000) )
 
 
     # yearly investment into renewable power generation
     # Calculated multiplying the interest dependent annuity factor with the capital cost of renewable generators times the newly built capacity (scaled to MW)
-    @constraint(model, eInvestmentCostR, ICr == sum((data.annuityR[r] * costCapR[r, i_current_year] * 1000 * pR[b, r]) for b in 1:data.n_buses, r in 1:data.n_ren_generators) )
+    ICr = model[:ICr]
+    @constraint(model, eInvestmentCostR, ICr == sum((data.annuityR[r] * data.costCapR[r, i_current_year] * 1000 * pR[b, r]) for b in 1:data.n_buses, r in 1:data.n_ren_generators) )
 
 
     # yearly investment into conventional power plants
     # Calculated multiplying the interest dependent annuity factor with the capital cost of conventional generators times the newly built capacity (scaled to MW)
-    @constraint(model, eInvestmentCostG, ICg == sum((data.annuityG[g] * costCapG[g, i_current_year] * 1000 * pG[b, g]) for b in 1:data.n_buses, g in 1:data.n_conv_generators) )
+    ICg = model[:ICg]
+    @constraint(model, eInvestmentCostG, ICg == sum((data.annuityG[g] * data.costCapG[g, i_current_year] * 1000 * pG[b, g]) for b in 1:data.n_buses, g in 1:data.n_conv_generators) )
 
 
     # yearly investment into energy storage and conversion technologies
     # Calculated as the sum of each investment cost. Those are in turn calculated by multiplying the interest dependent annuity factor with the capital cost of installation per MW times the newly built capacity (scaled to MW)
-    @constraint(model, eInvestmentCostS, ICs == sum((data.annuityST[st] * costCapST[st, i_current_year] * 1000 * eST[b, st]) for b in 1:data.n_buses, st in 1:data.n_storage_technologies) + sum((data.annuityCT[ct] * costCapCT[ct, i_current_year] * 1000 * pCT[b, ct]) for b in 1:data.n_buses, st in 1:data.n_conversion_technologies) )
+    ICs = model[:ICs]
+    @constraint(model, eInvestmentCostS, ICs == sum((data.annuityST[st] * data.costCapST[st, i_current_year] * 1000 * eST[b, st]) for b in 1:data.n_buses, st in 1:data.n_storage_technologies) + sum((data.annuityCT[ct] * data.costCapCT[ct, i_current_year] * 1000 * pCT[b, ct]) for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) )
 
 
     # yearly investment into transmission lines
     # Calculated by multiplying the interest dependent annuity factor with the capital cost per installed MW times the newly built capacity (scaled to MW)
-    @constraint(model, eInvestmentCostL, ICl == sum((data.annuityL[l] * costCapL[l] * 1000 * pL[l]) for l in 1:data.n_lines) )
+    ICl = model[:ICl]
+    @constraint(model, eInvestmentCostL, ICl == sum((data.annuityL[l] * data.costCapL[l] * 1000 * pL[l]) for l in 1:data.n_lines) )
 
 
     # yearly investment into transmission lines
     # Calculated by multiplying the interest dependent annuity factor with the capital cost per installed MW times the newly built capacity (scaled to MW)
+    ICh = model[:ICh]
     @constraint(model, eInvestmentCostH, ICh == sum((data.costCapUpgradeH[h] * 1000 * pH[h]) for h in 1:data.n_hydro_generators) )
 
 
@@ -128,48 +125,59 @@ function add_yearly_constraints(model::JuMP.Model, config::AbstrConfiguration, d
 
     # yearly investment into transmission lines
     # Calculated by multiplying the interest dependent annuity factor with the capital cost per installed MW times the newly built capacity (scaled to MW)
+    ICt = model[:ICt]
     @constraint(model, eInvestmentCostT, ICt == data.fractionOfYear * 1000 * (ICr + ICg + ICs + ICl + ICh) )
 
 
     # yearly greenhouse gas emissions of renewable power generation
     # Calculated by adding emissions resulting from power plant operation (dependent on produced power), from upstream and downstream emissions depending on installed capacity
-    @constraint(model, eGHGr, GHGr == sum((powerR[t, b, r] * data.GHGOperationR[r] * data.dt) for t in 1: data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum((1000 * pR[b, r] * data.GHGupstreamR[r] * data.dt) for b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum((pRpho[b, r] * data.GHGdownstreamR[r] * data.dt) for b in 1:data.n_buses, r in 1:data.n_ren_generators) )
+    GHGr = model[:GHGr]
+    @constraint(model, eGHGr, GHGr == sum((powerR[t, b, r] * data.GHGOperationR[r] * data.dt) for t in 1: data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum((1000 * pR[b, r] * data.GHGupstreamR[r] * data.dt) for b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum((data.pRpho[b, r, i_current_year] * data.GHGdownstreamR[r] * data.dt) for b in 1:data.n_buses, r in 1:data.n_ren_generators) )
 
 
     # yearly greenhouse gas emissions of conversion technologies
     # Calculated by adding emissions resulting from conversion technology operation (dependent on converted power), from upstream and downstream emissions depending on installed capacity
-    @constraint(model, eGHGct, GHGct == sum((powerCT[t, b, ct] * data.GHGOperationCT[ct] * data.dt) for t in 1: data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) + sum((1000 * pCT[b, ct] * data.GHGupstreamCT[ct] * data.dt) for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) + sum((pCTpho[b, ct] * data.GHGdownstreamCT[ct] * data.dt) for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) )
+    GHGct = model[:GHGct]
+    @constraint(model, eGHGct, GHGct == sum((powerCT[t, b, ct] * data.GHGOperationCT[ct] * data.dt) for t in 1: data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) + sum((1000 * pCT[b, ct] * data.GHGupstreamCT[ct] * data.dt) for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) + sum((data.pCTpho[b, ct, i_current_year] * data.GHGdownstreamCT[ct] * data.dt) for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) )
 
 
     # TODO: why is here no *dt in each sum as in the other GHG calculations?
     # yearly greenhouse gas emissions of storage technologies
     # Calculated by adding emissions resulting from storage operation (dependent on stored power), from upstream and downstream emissions depending on installed capacity
-    @constraint(model, eGHGst, GHGst == sum((storedST[t, b, st] * data.GHGOperationST[st]) for t in 1: data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies) + sum((1000 * eST[b, st] * data.GHGupstreamST[st]) for b in 1:data.n_buses, st in 1:data.n_storage_technologies) + sum((eSTpho[b, st] * data.GHGdownstreamST[st]) for b in 1:data.n_buses, st in 1:data.n_storage_technologies) )
+    GHGst = model[:GHGst]
+    @constraint(model, eGHGst, GHGst == sum((storedST[t, b, st] * data.GHGOperationST[st]) for t in 1: data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies) + sum((1000 * eST[b, st] * data.GHGupstreamST[st]) for b in 1:data.n_buses, st in 1:data.n_storage_technologies) + sum((data.eSTpho[b, st, i_current_year] * data.GHGdownstreamST[st]) for b in 1:data.n_buses, st in 1:data.n_storage_technologies) )
 
 
     # other yearly greenhouse gas emissions including Hyropower, run-of-river power and conventional power generation
     # Calculated by adding emissions resulting from generator operation (dependent on generated power)
-    @constraint(model, eGHGothers, GHGo == sum((powerROR[t, ror] * data.GHGOperationROR[ror] * data.dt) for t in 1: data.n_timesteps, ror in 1:data.n_ror_generators) + sum((powerH[t, h] * data.GHGOperationH[h] * data.dt) for t in 1:data.n_timesteps, h in 1:data.n_hydro_generators) + sum((powerG[t, b, g] * data.GHGOperationG[g] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators) )
+    GHGo = model[:GHGo]
+    powerRoR = model[:powerRoR]
+    powerH = model[:powerH]
+    @constraint(model, eGHGothers, GHGo == sum((powerRoR[t, ror] * data.GHGOperationRoR[ror] * data.dt) for t in 1: data.n_timesteps, ror in 1:data.n_ror_generators) + sum((powerH[t, h] * data.GHGOperationH[h] * data.dt) for t in 1:data.n_timesteps, h in 1:data.n_hydro_generators) + sum((powerG[t, b, g] * data.GHGOperationG[g] * data.dt) for t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators) )
 
 
     # sum yearly operational greenhouse gas emissions
     # Calculated by adding oparational emissions resulting from all sources
+    GHGoperation = model[:GHGoperation]
     @constraint(model, eGHGoperation, GHGoperation == GHGo + sum((powerR[t, b, r] * data.GHGOperationR[r] * data.dt) for t in 1: data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum((powerCT[t, b, ct] * data.GHGOperationCT[ct] * data.dt) for t in 1: data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies) + sum((storedST[t, b, st] * data.GHGOperationST[st]) for t in 1: data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies) )
 
 
     # sum yearly operational greenhouse gas emissions
     # Calculated by adding oparational emissions resulting from all sources
+    TGHG = model[:TGHG]
     @constraint(model, eTotalGHG, TGHG == GHGr + GHGst + GHGct + GHGo)
 
 
     # yearly carbon taxes related to greenhouse gas emissions
     # Calculated by multiplying the operational GHG emissions with the carbon tax per Kg of CO2
-    @constraint(model, eCostsGHG, costGHG == GHGoperation * data.carbonTax / 1000)
+    CostGHG = model[:CostGHG]
+    @constraint(model, eCostsGHG, CostGHG == GHGoperation * (data.carbonTax[i_current_year] / 1000) )
 
 
     # yearly total costs of the system
     # Calculated by adding total investment and operational costs and carbon tax
-    @constraint(model, eTotalCost, TotalCost == ICt + OCt + costGHG)
+    TotalCost = model[:TotalCost]
+    @constraint(model, eTotalCost, TotalCost == ICt + OCt + CostGHG)
 
 
     # TODO: remove this after code review
@@ -203,7 +211,7 @@ eEpsilonTLCA(ic)                 ..TotalLCA(ic)=l=EpsilonLCA(ic);
 
     # maximum power output of conventional generators
     # Calculated by adding (scaled) newly built and pre-existing capacities
-    @constraint(model, [t in 1:n_timesteps], powerG[t,:,:] .<= 1000 .* pG .+ pexistingG )
+    @constraint(model, [t in 1:data.n_timesteps], powerG[t,:,:] .<= 1000 .* pG .+ data.pexistingG )
 
 
     # equation removed. Already in variable definition. Old version of it additionally doesnt make a lot of sense (see variable bounds of pG)
@@ -212,7 +220,8 @@ eEpsilonTLCA(ic)                 ..TotalLCA(ic)=l=EpsilonLCA(ic);
 
     # total ammount of generated power during the year
     # Calculated by adding total power generation of conventional, renewable, hydro and run-of-river power generation.
-    @constraint(model, eGeneratedPower, TotalGeneratedPower == sum(powerG[t, b, g] for t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators) + sum(powerR[t, b, r] for t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum(powerH[t, h] for t in 1:data.n_timesteps, h in 1:data.n_hydro_generators) + sum(powerROR[t, ror] for t in 1:data.n_timesteps, ror in 1:data.n_ror_generators) )
+    TotalGeneratedPower = model[:TotalGeneratedPower]
+    @constraint(model, eGeneratedPower, TotalGeneratedPower == sum(powerG[t, b, g] for t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators) + sum(powerR[t, b, r] for t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum(powerH[t, h] for t in 1:data.n_timesteps, h in 1:data.n_hydro_generators) + sum(powerRoR[t, ror] for t in 1:data.n_timesteps, ror in 1:data.n_ror_generators) )
 
 
     # minimal ammount of generated conventional power during the year
@@ -275,6 +284,16 @@ eRampsCoal4(t,b)                      ..rampsAuxCoal4(t,b) =l=PexistingG(b,'g1')
 
     # change in stored water for hydro generators
     # change is calculated as difference dependent on all different in- and outflow sources.
+    storedH = model[:storedH]
+    vLossH = model[:vLossH]
+    qturbined = model[:qturbined]
+    qpumped = model[:qpumped]
+    qdiverted = model[:qdiverted]
+    qreserve = model[:qreserve]
+    qfictitious = model[:qfictitious]
+    qdivertedupstream = model[:qdivertedupstream]
+    qturbinedupstream = model[:qturbinedupstream]
+    qpumpeddownstream = model[:qpumpeddownstream]
     @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators; t < data.n_timesteps], storedH[t + 1, h] - storedH[t, h] == -vLossH[t, h] + data.dt * 3600 * (data.qInflowH[t, h] - qturbined[t, h] - qpumped[t, h] - qdiverted[t, h] - qreserve[t, h] + qfictitious[t, h] + qdivertedupstream[t, h] + qturbinedupstream[t, h] + qpumpeddownstream[t, h]) )
 
 
@@ -319,6 +338,7 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
 
     # upper limit for the power needed to pump excess water or refill reservoirs
     # the used power has to be less than the existing and newly built capacities combined.
+    powerHpump = model[:powerHpump]
     @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], powerHpump[t, h] <= data.pexistingH[h, i_current_year] + 1000 * pH[h] )
 
 
@@ -368,6 +388,7 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
 
     # total energy balance for all storage technologies
     # calculated by summing up the losses of stored energy, the sum of energy converted using electricity and the sum converted from other sources. Then, the sum of expended stored energy is subtracted.
+    vLossST = model[:vLossST]
     @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies; t < data.n_timesteps], storedST[t + 1, b, st] - storedST[t, b, st] == -vLossST[t, b, st] + sum(data.conversionFactorCT[ct, i_current_year] * data.conversionEfficiencyCT[ct, i_current_year] * powerCT[t, b, ct] * data.dt for ct in 1:data.n_conversion_technologies if ((data.vectorCT_D[ct] == data.storageEntityST[st]) && (data.vectorCT_O[ct] == "e"))) + sum(data.conversionEfficiencyCT[ct, i_current_year] * powerCT[t, b, ct] * data.dt for ct in 1:data.n_conversion_technologies if ((data.vectorCT_D[ct] == data.storageEntityST[st]) && (data.vectorCT_O[ct] != "e"))) - sum(powerCT[t, b, ct] / (data.conversionFactorCT[ct, i_current_year] * data.conversionEfficiencyCT[ct, i_current_year]) * data.dt for ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == data.storageEntityST[st])) )
 
 
@@ -460,18 +481,21 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
 
     # power line losses of line l
     # the losses are equal to a loss factor of the total throughput in both directions
+    powerLlosses = model[:powerLlosses]
     @constraint(model, [t in 1:data.n_timesteps, l in 1:data.n_lines], powerLlosses[t, l] == (powerLpos[t, l] + powerLneg[t, l]) * data.lossesL[l] )
 
 
     # power imports of bus b
     # the sum of transfered power ending up in bus b without half of the losses occuring on the lines.
     # this means losses are allocated equally in b_ori and b_des.
+    powerBimp = model[:powerBimp]
     @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses], powerBimp[t, b] == sum( (powerLpos[t, l] - powerLneg[t, l] - powerLlosses[t, l] / 2) for l in 1:data.n_lines if (data.barD[l] == b)) )
 
 
     # power exports of bus b
     # the sum of transfered power leaving bus b without half of the losses occuring on the lines.
     # this means losses are allocated equally in b_ori and b_des.
+    powerBexp = model[:powerBexp]
     @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses], powerBexp[t, b] == sum( (powerLpos[t, l] - powerLneg[t, l] + powerLlosses[t, l] / 2) for l in 1:data.n_lines if (data.barO[l] == b)) )
 
 
@@ -479,7 +503,7 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
 
     # demand power balance
     # the demand has to equal the sum of produced, used and unserved power.
-    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses], data.demand[t, b, i_current_year] == powerunserved[t, b] + powerBimp[t, b] - powerBexp[t, b] + sum(powerG[t, b, g] for g in 1:data.n_conv_generators) + sum(powerR[t, b, r] for r in 1:data.n_ren_generators) + sum(powerH[t, h] - powerHpump[t, h] for h in 1:data.n_hydro_generators if (data.busH[h] == b)) + sum(powerRoR[t, ror] for ror in 1:data.n_ror_generators if (data.busRoR[ror] == b)) - sum(powerCT[t, b, ct] for ct in 1:data.n_conversion_technology if (data.vectorCT_O[ct] == "e")) + sum(powerCT[t, b, ct] for ct in 1:data.n_conversion_technology if (data.vectorCT_D[ct] == "e")) )
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses], data.demand[t, b, i_current_year] == powerunserved[t, b] + powerBimp[t, b] - powerBexp[t, b] + sum(powerG[t, b, g] for g in 1:data.n_conv_generators) + sum(powerR[t, b, r] for r in 1:data.n_ren_generators) + sum(powerH[t, h] - powerHpump[t, h] for h in 1:data.n_hydro_generators if (data.busH[h] == b)) + sum(powerRoR[t, ror] for ror in 1:data.n_ror_generators if (data.busRoR[ror] == b)) - sum(powerCT[t, b, ct] for ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == "e")) + sum(powerCT[t, b, ct] for ct in 1:data.n_conversion_technologies if (data.vectorCT_D[ct] == "e")) )
 
 
     # power reserves
@@ -487,21 +511,29 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
     # system requirement for operating reserve
     # the reserve depends on the reserve for largest power plant, the demand dependent reserve and a reserve dependent on the maximal renewable power production.
     # Note: ReserveLargestUnit is >0 only if ReserveFast=0;
+    reserveOperatingReq = model[:reserveOperatingReq]
     @constraint(model, [t in 1:data.n_timesteps],  reserveOperatingReq[t] == data.reserveLargestUnit + data.reserveDemand * sum(data.demand[t, b, i_current_year] for b in 1:data.n_buses) + data.reserveRenewables * sum(data.profilesR[t, b, r] * (data.pexistingR[b, r, i_current_year] + 1000 * pR[b, r]) for b in 1:data.n_buses, r in 1:data.n_ren_generators) )
 
 
     # system requirement for frequency reserve
     # TODO: is this constraint really needed?
+    reserveFrequencyReq = model[:reserveFrequencyReq]
     @constraint(model, [t in 1:data.n_timesteps],  reserveFrequencyReq[t] == data.reserveFast )
 
 
     # total provided operating reserve
     # the reserves of conversion technologies, conventional generators an hydro grnerators have to be greater than the required reserve.
+    reserveOperatingCT = model[:reserveOperatingCT]
+    reserveOperatingH = model[:reserveOperatingH]
+    reserveOperatingG = model[:reserveOperatingG]
     @constraint(model, [t in 1:data.n_timesteps],  reserveOperatingReq[t] <= sum(reserveOperatingCT[t, b, ct] for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies if (data.vectorCT_D[ct] == "e")) + sum(reserveOperatingH[t, h] for h in 1:data.n_hydro_generators if (data.vMaxH[h] > 0.0)) + sum(reserveOperatingG[t, b, g] for b in 1:data.n_buses, g in 1:data.n_conv_generators) )
 
 
     # total provided frequency reserve
     # the frequency reserves of conversion technologies, conventional generators an hydro grnerators have to be greater than the required reserve.
+    reserveFrequencyCT = model[:reserveFrequencyCT]
+    reserveFrequencyH = model[:reserveFrequencyH]
+    reserveFrequencyG = model[:reserveFrequencyG]
     # giving freq reserve only to Li-ion storage.
     @constraint(model, [t in 1:data.n_timesteps],  reserveFrequencyReq[t] <= sum(reserveFrequencyCT[t, b, ct] for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == "li-ions")) + sum(reserveFrequencyH[t, h] for h in 1:data.n_hydro_generators if (data.vMaxH[h] > 0.0)) + sum(reserveFrequencyG[t, b, g] for b in 1:data.n_buses, g in 1:data.n_conv_generators) )
 
@@ -523,7 +555,7 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
 
     # energy availability condition in ST corr to CT
     # stored energy has to be greater than the ammount of energy taken out in addition to the reserve.
-    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies], storedST[t, b, st] >= data.dt * ( sum(powerCT[t, b, ct] / data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == storageEntityST[st])) + sum((reserveFrequencyCT[t, b, ct] + reserveOperatingCT[t, b, ct]) / data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if ((data.vectorCT_O[ct] == storageEntityST[st]) && (data.vectorCT_D[ct] == "e"))) ) )
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies], storedST[t, b, st] >= data.dt * ( sum(powerCT[t, b, ct] / data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == data.storageEntityST[st])) + sum((reserveFrequencyCT[t, b, ct] + reserveOperatingCT[t, b, ct]) / data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if ((data.vectorCT_O[ct] == data.storageEntityST[st]) && (data.vectorCT_D[ct] == "e"))) ) )
 
 
     # conversion from water to reserve (estimate)
@@ -541,6 +573,8 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
 
     # energy to be stored at all times in ESS
     # the autonomy given by storage technologies and hydro reservoirs should be greater than the required autonomy.
+    autonomyST = model[:autonomyST]
+    autonomyH = model[:autonomyH]
     @constraint(model, [t in 1:data.n_timesteps], data.Autonomy <= sum(autonomyST[t, b, st] for b in 1:data.n_buses, st in 1:data.n_storage_technologies if (data.storageEntityST[st] != "heat"))
     + sum(autonomyH[t, h] for h in 1:data.n_hydro_generators if (data.vMaxH[h] > 0.0)) )
 
