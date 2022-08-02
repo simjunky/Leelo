@@ -1,8 +1,0 @@
-# Source: D. Bogdanov, O. Koskinen, A. Aghahosseini, and C. Breyer, “Integrated renewable energy based power system for Europe, Eurasia and MENA regions,” 2016 Int. Energy Sustain. Conf. IESC 2016, no. June, 2016.
-line_name,MaxCapacityPotL,BarO,BarD,LossesL,Length,Losses_per_k_km,LossesConverter,capExLine_per_MW_and_km,capExConverter_per_MW,CostCapL,CostOperationFixL,CostOperationVarL,AnnuityL,Lifetime,CapLExisting
-"l1",1706,"b1","b2",0.0220,500,0.016,0.014,0,0,0,5.550,0.50,0.05480,50,1706
-"l2",1930,"b2","b3",0.0250,700,0.016,0.014,0,0,0,7.050,0.50,0.05480,50,1930
-"l3",1500,"b3","b4",0.0240,600,0.016,0.014,0,0,0,6.300,0.50,0.05480,50,1500
-"l4",40000,"b1","b2",0.0220,500,0.016,0.014,0.6120,180,486.00,5.550,0.50,0.05480,50,18
-"l5",40000,"b2","b3",0.0250,700,0.016,0.014,0.6120,180,608.40,7.050,0.50,0.05480,50,2
-"l6",40000,"b3","b4",0.0240,600,0.016,0.014,0.6120,180,547.20,6.300,0.50,0.05480,50,2

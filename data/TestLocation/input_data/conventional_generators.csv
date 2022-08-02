@@ -1,7 +1,0 @@
-# Source techno-economic: Ram M. et al. Global Energy System based on 100% Renewable Energy – Power, Heat, Transport and Desalination Sectors. Study by Lappeenranta University of Technology and Energy Watch Group, Lappeenranta, Berlin, March 2019, IRENA (2018), Renewable Power Generation Costs in 2017, International Renewable Energy Agency, Abu Dhabi.
-# Source GHG: Vasilis M. Fthenakis, Life Cycle Analysis of Photovoltaics: Strategic Technology Assessment (excerpt of A Comprehensive Guide to Solar Energy Systems), Special Report of the Intergovernmental Panel on Climate Change, Renewable Energy Sources and Climate Change Mitigation, PIK, Intergovernmental Panel on Climate Change 2012, NREL, Life Cycle Assessment Harmonization
-generator_name,CostCapG,CostOperationVarG,CostOperationFixG,AnnuityG,Lifetime,CostReserveG,PMinG,PMaxG,TechnologyG,Tech,PMatterG,GHGupstreamG,GHGOperationG,pexistingGb1,pexistingGb2,pexistingGb3,pexistingGb4
-"g1_Coal",1500,33.636,20,0.0583,40,200,0,0,1,"Coal",0,0,1030.303,0,0,0,0
-"g2_Diesel",880,145,74.8,0.0651,30,0,0,0,2,"Diesel",0,0,833.333,0,0,0,0
-"g3_GasTurbineCC",775,2,19.4,0.0611,35,0,0,30000,3,"Gas turbine CC",0,0,476.8,0,0,0,0
-"g4_GasTurbineOC",475,2,14.25,0.0611,35,0,0,30000,4,"Gas turbine OC",0,0,476.8,0,0,0,0
