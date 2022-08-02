@@ -107,7 +107,7 @@ function read_model_data()::ModelData
 
 
 
-    @info "Showing Data Frames:"
+    #@info "Showing Data Frames:"
     #@show describe(scenario_setting_data)
     #@show describe(conv_generator_data)
     #@show describe(ren_generator_data)
@@ -126,12 +126,12 @@ function read_model_data()::ModelData
     year_timestep = scenario_setting_data[1, :year_timestep]
     years = collect(starting_year:year_timestep:(starting_year + (n_years - 1) * year_timestep))
 
+
     n_buses = scenario_setting_data[1, :n_buses]
     n_conv_generators = nrow(conv_generator_data)
     n_ren_generators = nrow(ren_generator_data)
     n_conversion_technologies = nrow(converter_data)
     n_storage_technologies = nrow(storage_data)
-
 
 
     my_interest_rate = scenario_setting_data[1, :interest_rate]
@@ -140,29 +140,65 @@ function read_model_data()::ModelData
     my_lifetimeCT = Matrix{Int64}(converter_data[!, Symbol.("LifetimeCTy" .* string.(years))])
     my_lifetimeST = Matrix{Int64}(storage_data[!, Symbol.("LifetimeSTy" .* string.(years))])
     my_lifetimeL = transmission_data[!, :LifetimeL]
+
+
     my_pexistingG = zeros(Float64, (n_buses, n_conv_generators, n_years))
     my_pexistingR = zeros(Float64, (n_buses, n_ren_generators, n_years))
     my_pexistingCT = zeros(Float64, (n_buses, n_conversion_technologies, n_years))
     my_VexistingST = zeros(Float64, (n_buses, n_storage_technologies, n_years))
+
+    my_comissioned_Cap_G = zeros(Float64, (n_buses, n_conv_generators, n_years))
+    my_comissioned_Cap_R = zeros(Float64, (n_buses, n_ren_generators, n_years))
+    my_comissioned_Cap_CT = zeros(Float64, (n_buses, n_conversion_technologies, n_years))
+    my_comissioned_Cap_ST = zeros(Float64, (n_buses, n_storage_technologies, n_years))
+
+
     my_demand = zeros(Float64, (scenario_setting_data[1, :n_timesteps], n_buses, n_years))
     my_profilesR = zeros(Float64, ((scenario_setting_data[1, :n_timesteps], n_buses, n_ren_generators)))
 
     for i in 1:n_buses
-        my_pexistingG[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "PexistingG"), Symbol.("y" .* string.(years)) ])
+        my_pexistingG[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "PexistingG"), Symbol.("existingCapacityy" .* string.(years)) ])
 
-        my_pexistingR[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "PexistingR"), Symbol.("y" .* string.(years)) ])
+        my_comissioned_Cap_G[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "PexistingG"), Symbol.("commissionedCapacityy" .* string.(years)) ])
 
-        my_pexistingCT[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "PexistingCT"), Symbol.("y" .* string.(years)) ])
+        my_pexistingR[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "PexistingR"), Symbol.("existingCapacityy" .* string.(years)) ])
 
-        my_VexistingST[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "VexistingST"), Symbol.("y" .* string.(years)) ])
+        my_comissioned_Cap_R[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "PexistingR"), Symbol.("commissionedCapacityy" .* string.(years)) ])
+
+        my_pexistingCT[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "PexistingCT"), Symbol.("existingCapacityy" .* string.(years)) ])
+
+        my_comissioned_Cap_CT[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "PexistingCT"), Symbol.("commissionedCapacityy" .* string.(years)) ])
+
+        my_VexistingST[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "VexistingST"), Symbol.("existingCapacityy" .* string.(years)) ])
+
+        my_comissioned_Cap_ST[i,:,:] = Array{Float64, 2}(existing_capacity_data[ (existing_capacity_data.bus_name .== "b" * string(i)) .& (existing_capacity_data.variable_name .== "VexistingST"), Symbol.("commissionedCapacityy" .* string.(years)) ])
+
+
 
         my_demand[:, i, :] = Array{Float64, 2}(demand_profile_data[!, Symbol.("ElectricityDemandb" * string(i) * "y" .* string.(years)) ])
 
         my_profilesR[:, i, :] = Array{Float64, 2}(renewable_profiles_data[!, Symbol.("profilesRb" * string(i) * "r" .* string.(collect(1:n_ren_generators)) ) ])
-
     end
 
-    #@show my_pexistingG # TODO: remove
+
+    # local variables to calculate the phase-out capacities
+    my_pG_phase_out = zeros(Float64, (n_buses, n_conv_generators, n_years))
+    my_pR_phase_out = zeros(Float64, (n_buses, n_ren_generators, n_years))
+    my_pCT_phase_out = zeros(Float64, (n_buses, n_conversion_technologies, n_years))
+    my_eST_phase_out = zeros(Float64, (n_buses, n_storage_technologies, n_years))
+
+
+    # calculate the preliminary phase-out of capacities built before the simulation timespan
+    # TODO: check if even two or more years are simulated...
+    for y in 2:n_years
+        my_pG_phase_out[:,:,y] = my_pexistingG[:,:,y] - my_pexistingG[:,:,y - 1] - my_comissioned_Cap_G[:,:,y]
+
+        my_pR_phase_out[:,:,y] = my_pexistingR[:,:,y] - my_pexistingR[:,:,y - 1] - my_comissioned_Cap_R[:,:,y]
+
+        my_pCT_phase_out[:,:,y] = my_pexistingCT[:,:,y] - my_pexistingCT[:,:,y - 1] - my_comissioned_Cap_CT[:,:,y]
+
+        my_eST_phase_out[:,:,y] = my_VexistingST[:,:,y]- my_VexistingST[:,:,y - 1] - my_comissioned_Cap_ST[:,:,y]
+    end
 
 
     # TODO: keep replacing placeholder-zeros with real values
@@ -199,6 +235,7 @@ function read_model_data()::ModelData
                         costRampsCoal_daily = scenario_setting_data[1, :CoalRampingDaily],
                         costWTCoal =scenario_setting_data[1, :CoalRampingWearTear],
                         pexistingG = my_pexistingG,
+                        pGpho = my_pG_phase_out,
                         costCapR = Matrix{Float64}(ren_generator_data[!,Symbol.("CostCapRy".*string.(years))]),
                         costOperationVarR = Matrix{Float64}(ren_generator_data[!,Symbol.("CostOperationVarRy".*string.(years))]),
                         costOperationFixR = Matrix{Float64}(ren_generator_data[!,Symbol.("CostOperationFixRy".*string.(years))]),
@@ -209,7 +246,7 @@ function read_model_data()::ModelData
                         minCapacityPotR = copy(transpose(Matrix{Float64}(ren_generator_data[!, Symbol.("minCapacityPotRb" .* string.( collect(1:n_buses) ))]))),
                         maxCapacityPotR = copy(transpose(Matrix{Float64}(ren_generator_data[!, Symbol.("maxCapacityPotRb" .* string.( collect(1:n_buses) ))]))),
                         pexistingR = my_pexistingR,
-                        pRpho = [0.0 0.0; 0.0 0.0], # TODO, or has it been excluded?
+                        pRpho = my_pR_phase_out,
                         costCapCT = Matrix{Float64}(converter_data[!, Symbol.("CostCapCTy" .* string.(years))]),
                         costOperationFixCT = Matrix{Float64}(converter_data[!, Symbol.("CostOperationFixCTy" .* string.(years))]),
                         costOperationConvCT = Matrix{Float64}(converter_data[!, Symbol.("CostOperationConvCTy" .* string.(years))]),
@@ -221,7 +258,7 @@ function read_model_data()::ModelData
                         minCapacityPotCT = copy(transpose(Matrix{Float64}(converter_data[!, Symbol.("minCapacityPotCTb" .* string.(collect(1:n_buses)))]))),
                         maxCapacityPotCT = copy(transpose(Matrix{Float64}(converter_data[!, Symbol.("maxCapacityPotCTb" .* string.(collect(1:n_buses)))]))),
                         pexistingCT = my_pexistingCT,
-                        pCTpho = [0.0 0.0; 0.0 0.0],  # TODO
+                        pCTpho = my_pCT_phase_out,
                         vectorCT_O = converter_data[!, :inputCT],
                         vectorCT_D = converter_data[!, :outputCT],
                         ProfilesCSP = Matrix{Float64}(csp_profiles_data[!, Symbol.("profilesCSPb" .* string.(collect(1:n_buses)) )]),
@@ -239,7 +276,7 @@ function read_model_data()::ModelData
                         cyclesST = storage_data[!, :CyclesST],
                         vExistingST = my_VexistingST,
                         storageEntityST = storage_data[!, :storage_entity],
-                        eSTpho = [0.0], # TODO
+                        eSTpho = my_eST_phase_out,
                         costOperationFixH = hydro_cascades_data[!, :CostOperationFixH],
                         costReserveH = hydro_cascades_data[!, :CostReserveH],
                         pMaxH = hydro_cascades_data[!, :PMaxH],

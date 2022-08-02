@@ -121,6 +121,8 @@ struct ModelData
     costWTCoal::Float64
     # (b, g, y) busses b existing capacity of conventional generator g in year y [MW]
     pexistingG::Array{Float64, 3}
+    # (b, g, y) capacities of conventional generator g in bus b phased out from previous benchmark year (y-1) to current year y [MW]
+    pGpho::Array{Float64, 3}
 
 
 
@@ -146,8 +148,8 @@ struct ModelData
     maxCapacityPotR::Array{Float64, 2}
     # (b, r, y) existing power capacity of renewable generator r in bus b in year y [MW]
     pexistingR::Array{Float64, 3}
-    # (b,r) capacities of renewable generator g in bus b phased out from previous benchmark year to current year [MW]
-    pRpho::Array{Float64, 2}
+    # (b, r, y) capacities of renewable generator r in bus b phased out from previous benchmark year (y-1) to current year y [MW]
+    pRpho::Array{Float64, 3}
 
 
 
@@ -181,8 +183,8 @@ struct ModelData
     maxCapacityPotCT::Array{Float64, 2}
     # (b, ct, y) existing power capacity of conversion technology ct in bus b [MW]
     pexistingCT::Array{Float64, 3}
-    # (b,ct) capacities of conversion technology ct in bus b phased out from previous benchmark year to current year [MW]
-    pCTpho::Array{Float64, 2}
+    # (b, ct, y) capacities of conversion technology ct in bus b phased out from previous benchmark year to current year [MW]
+    pCTpho::Array{Float64, 3}
     # (ct) Identifier for energy entity taken by ct
     vectorCT_O::Array{String, 1}
     # (ct) Identifier for energy entity delivered by ct
@@ -231,8 +233,8 @@ struct ModelData
     vExistingST::Array{Float64, 3}
     # (st) identifiers for energy entity stored in storage technology st
     storageEntityST::Array{String, 1}
-    # (b,st) capacities of storage technology st in bus b phased out from previous benchmark year to current year [MW]
-    eSTpho::Array{Float64, 1}
+    # (b, st, y) capacities of storage technology st in bus b phased out from previous benchmark year (y-1) to current year y [MW]
+    eSTpho::Array{Float64, 3}
 
 
 
@@ -460,6 +462,7 @@ struct ModelData
                         costRampsCoal_daily::Float64 = 0.0,
                         costWTCoal::Float64 = 0.0,
                         pexistingG::Array{Float64, 3} = zeros(Float64, (1, 1, 1)),
+                        pGpho::Array{Float64, 3} = zeros(Float64, (1, 1, 1)),
                         costCapR::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         costOperationVarR::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         costOperationFixR::Array{Float64, 2} = zeros(Float64, (1, 1)),
@@ -470,7 +473,7 @@ struct ModelData
                         minCapacityPotR::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         maxCapacityPotR::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         pexistingR::Array{Float64, 3} = zeros(Float64, (1, 1, 1)),
-                        pRpho::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
+                        pRpho::Array{Float64, 3} = zeros(Float64, (1, 1, 1)),
                         costCapCT::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         costOperationFixCT::Array{Float64, 2} = zeros(Float64, (1, 1)),
                         costOperationConvCT::Array{Float64, 2} = zeros(Float64, (1, 1)),
@@ -482,7 +485,7 @@ struct ModelData
                         minCapacityPotCT::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         maxCapacityPotCT::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
                         pexistingCT::Array{Float64, 3} = zeros(Float64, (1, 1, 1)),
-                        pCTpho::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
+                        pCTpho::Array{Float64, 3} = zeros(Float64, (1, 1, 1)),
                         vectorCT_O::Array{String, 1} = ["0.0"],
                         vectorCT_D::Array{String, 1} = ["0.0"],
                         ProfilesCSP::Array{Float64, 2} = [0.0 0.0; 0.0 0.0],
@@ -500,7 +503,7 @@ struct ModelData
                         cyclesST::Array{Int64, 1} = [0.0],
                         vExistingST::Array{Float64, 3} = zeros(Int64, (1, 1, 1)),
                         storageEntityST::Array{String, 1} = ["0.0"],
-                        eSTpho::Array{Float64, 1} = [0.0],
+                        eSTpho::Array{Float64, 3} = zeros(Float64, (1, 1, 1)),
                         costOperationFixH::Array{Float64, 1} = [0.0],
                         costReserveH::Array{Float64, 1} = [0.0],
                         pMaxH::Array{Float64, 1} = [0.0],
@@ -633,6 +636,7 @@ struct ModelData
                     costRampsCoal_daily,
                     costWTCoal,
                     pexistingG,
+                    pGpho,
                     costCapR,
                     costOperationVarR,
                     costOperationFixR,
