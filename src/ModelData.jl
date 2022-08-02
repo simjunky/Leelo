@@ -273,7 +273,7 @@ struct ModelData
     pumpedGoesTo::Array{String, 1}
     # (h) minimum spilled or ecological flow of h
     qDivertedMinH::Array{Float64, 1}
-    # (t,h)     inflows to h in time t
+    # (t, h) inflows to h in time t
     qInflowH::Array{Float64, 2}
     # (h) evaporation or infiltration losses factor
     lossesH::Array{Float64, 1}
@@ -286,7 +286,7 @@ struct ModelData
     costOperationFixRoR::Array{Float64, 1}
     # (ror)       max installed capacity of ror (MW)
     pMaxRoR::Array{Float64, 1}
-    # (t, ror) ror profile
+    # (t, ror) ror profiles for each bus
     profilesRoR::Array{Float64, 2}
     # (ror)        bus of ror
     busRoR::Array{Int64, 1}

@@ -99,25 +99,18 @@ function read_model_data()::ModelData
     # create DataFrame containing data of csp profiles
     csp_profiles_data = DataFrame(XLSX.readtable(csp_profiles_file, "Tabelle1", infer_eltypes = true)...)
 
+    # filename of file containing data of hydro cascades profiles
+    hydro_cascades_profiles_file = folder * "hydro_cascades_profiles.xlsx"
 
+    # create DataFrame containing data of hydro cascade profiles
+    hydro_cascades_profiles_data = DataFrame(XLSX.readtable(hydro_cascades_profiles_file, "Tabelle1", infer_eltypes = true)...)
 
-    #= TODO: read in the following data:
-    hydro_run_of_river_profiles.xlsx
-    =#
+    # filename of file containing data of hydro cascades profiles
+    hydro_RoR_profiles_file = folder * "hydro_run_of_river_profiles.xlsx"
 
+    # create DataFrame containing data of hydro cascade profiles
+    hydro_RoR_profiles_data = DataFrame(XLSX.readtable(hydro_RoR_profiles_file, "Tabelle1", infer_eltypes = true)...)
 
-
-    #@info "Showing Data Frames:"
-    #@show describe(scenario_setting_data)
-    #@show describe(conv_generator_data)
-    #@show describe(ren_generator_data)
-    #@show describe(converter_data)
-    #@show describe(storage_data)
-    #@show describe(transmission_data)
-    #@show describe(demand_profile_data)
-    #@show describe(hydro_cascades_data)
-    #@show describe(hydro_ROR_data)
-    #@show describe(existing_capacity_data)
 
 
     # read neccessairy indexes to assemble matrices
@@ -132,6 +125,8 @@ function read_model_data()::ModelData
     n_ren_generators = nrow(ren_generator_data)
     n_conversion_technologies = nrow(converter_data)
     n_storage_technologies = nrow(storage_data)
+    n_hydro_generators = nrow(hydro_cascades_data)
+    n_ror_generators = nrow(hydro_ROR_data)
 
 
     my_interest_rate = scenario_setting_data[1, :interest_rate]
@@ -291,11 +286,11 @@ function read_model_data()::ModelData
                         divertedGoesTo = hydro_cascades_data[!, :DivertedGoesTo],
                         pumpedGoesTo = hydro_cascades_data[!, :PumpedGoesTo],
                         qDivertedMinH = hydro_cascades_data[!, :QDivertedMinH],
-                        qInflowH = [0.0 0.0; 0.0 0.0], # TODO
+                        qInflowH = Matrix{Float64}(hydro_cascades_profiles_data[!, Symbol.("h" .* string.(collect(1:n_hydro_generators))) ]),
                         lossesH = hydro_cascades_data[!, :LossesH],
                         costOperationFixRoR = hydro_ROR_data[!, :CostOperationFixRoR],
                         pMaxRoR = hydro_ROR_data[!, :PMaxRoR],
-                        profilesRoR = [0.0 0.0; 0.0 0.0], # TODO
+                        profilesRoR = Matrix{Float64}(hydro_RoR_profiles_data[!, Symbol.("ror" .* string.(collect(1:n_ror_generators))) ]),
                         busRoR = hydro_ROR_data[!, :BusRoR],
                         maxCapacityPotL = transmission_data[!, :MaxCapacityPotL],
                         barO = transmission_data[!, :BarOrigin],
