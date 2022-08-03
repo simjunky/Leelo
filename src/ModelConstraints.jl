@@ -1,13 +1,48 @@
 
 # TODO: rewrite docstring
+# Constraint creation
+"""
+TODO
+"""
+function add_model_constraints(model::JuMP.Model, config::SingleObjectiveBasicConfig, data::ModelData, i_current_year::Int64)
+
+    # TODO: remove unneeded outputs
+    @info "adding constraints for single objective optimization"
+
+    add_single_objective_constraints(model, data, i_current_year)
+
+    return nothing
+end
+
+
+
+# TODO: rewrite docstring
+# Constraint creation
+"""
+TODO
+"""
+function add_model_constraints(model::JuMP.Model, config::SingleObjectiveMultiServiceConfig, data::ModelData, i_current_year::Int64)
+
+    # TODO: remove unneeded outputs
+    @info "adding constraints for single objective multi service optimization"
+
+    add_single_objective_constraints(model, data, i_current_year)
+    add_multi_service_constraints(model, data, i_current_year)
+
+    return nothing
+end
+
+
+
+# TODO: rewrite docstring
 # Constraint creation for one specific year
 """
 This is currently the function called to add constraints to the model for the computation for one given year.
 """
-function add_model_constraints(model::JuMP.Model, config::AbstrConfiguration, data::ModelData, i_current_year::Int64)
+function add_single_objective_constraints(model::JuMP.Model, data::ModelData, i_current_year::Int64)
 
     # TODO: remove unneeded outputs
-    @info "add_yearly_constraints() called for " * string(i_current_year)
+    @info "add_single_objective_constraints() called for " * string(i_current_year)
 
     #TODO: all other indices should be called using "data." e.g. data.n_buses
 
@@ -506,12 +541,28 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
     @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses], data.demand[t, b, i_current_year] == powerunserved[t, b] + powerBimp[t, b] - powerBexp[t, b] + sum(powerG[t, b, g] for g in 1:data.n_conv_generators) + sum(powerR[t, b, r] for r in 1:data.n_ren_generators) + sum(powerH[t, h] - powerHpump[t, h] for h in 1:data.n_hydro_generators if (data.busH[h] == b)) + sum(powerRoR[t, ror] for ror in 1:data.n_ror_generators if (data.busRoR[ror] == b)) - sum(powerCT[t, b, ct] for ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == "e")) + sum(powerCT[t, b, ct] for ct in 1:data.n_conversion_technologies if (data.vectorCT_D[ct] == "e")) )
 
 
+    return nothing
+end
+
+
+
+# TODO: rewrite docstring
+# Constraint creation for one specific year
+"""
+TODO
+"""
+function add_multi_service_constraints(model::JuMP.Model, data::ModelData, i_current_year::Int64)
+
+    # TODO: remove unneeded outputs
+    @info "add_multi_service_constraints() called for " * string(i_current_year)
+
     # power reserves
 
     # system requirement for operating reserve
     # the reserve depends on the reserve for largest power plant, the demand dependent reserve and a reserve dependent on the maximal renewable power production.
     # Note: ReserveLargestUnit is >0 only if ReserveFast=0;
     reserveOperatingReq = model[:reserveOperatingReq]
+    pR = model[:pR]
     @constraint(model, [t in 1:data.n_timesteps],  reserveOperatingReq[t] == data.reserveLargestUnit + data.reserveDemand * sum(data.demand[t, b, i_current_year] for b in 1:data.n_buses) + data.reserveRenewables * sum(data.profilesR[t, b, r] * (data.pexistingR[b, r, i_current_year] + 1000 * pR[b, r]) for b in 1:data.n_buses, r in 1:data.n_ren_generators) )
 
 
@@ -531,40 +582,49 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
 
     # total provided frequency reserve
     # the frequency reserves of conversion technologies, conventional generators an hydro grnerators have to be greater than the required reserve.
+    # giving freq reserve only to Li-ion storage.
     reserveFrequencyCT = model[:reserveFrequencyCT]
     reserveFrequencyH = model[:reserveFrequencyH]
     reserveFrequencyG = model[:reserveFrequencyG]
-    # giving freq reserve only to Li-ion storage.
     @constraint(model, [t in 1:data.n_timesteps],  reserveFrequencyReq[t] <= sum(reserveFrequencyCT[t, b, ct] for b in 1:data.n_buses, ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == "li-ions")) + sum(reserveFrequencyH[t, h] for h in 1:data.n_hydro_generators if (data.vMaxH[h] > 0.0)) + sum(reserveFrequencyG[t, b, g] for b in 1:data.n_buses, g in 1:data.n_conv_generators) )
 
 
     # maximal provived reserve by hydro generators
     # the sum of reserves and produced power are limited by the built and existing capacities.
+    powerH = model[:powerH]
+    pH = model[:pH]
     @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators; data.vMaxH[h] > 0.0], reserveFrequencyH[t, h] + reserveOperatingH[t, h] + powerH[t, h] <= 1000 * pH[h] + data.pexistingH[h, i_current_year] )
 
 
     # maximal provived reserve by conventional generators
     # the sum of reserves and produced power are limited by the built and existing capacities.
+    powerG = model[:powerG]
+    pG = model[:pG]
     @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators], reserveFrequencyG[t, b, g] + reserveOperatingG[t, b, g] + powerG[t, b, g] <= 1000 * pG[b, g] + data.pexistingG[b, g, i_current_year] )
 
 
     # maximal provived reserve by conversion technologies
     # the sum of reserves and produced power are limited by the built and existing capacities.
+    powerCT = model[:powerCT]
+    pCT = model[:pCT]
     @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies; data.vectorCT_D[ct] == "e"], reserveFrequencyCT[t, b, ct] + reserveOperatingCT[t, b, ct] + powerCT[t, b, ct] <= 1000 * pCT[b, ct] + data.pexistingCT[b, ct, i_current_year] )
 
 
     # energy availability condition in ST corr to CT
     # stored energy has to be greater than the ammount of energy taken out in addition to the reserve.
+    storedST = model[:storedST]
     @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies], storedST[t, b, st] >= data.dt * ( sum(powerCT[t, b, ct] / data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == data.storageEntityST[st])) + sum((reserveFrequencyCT[t, b, ct] + reserveOperatingCT[t, b, ct]) / data.conversionFactorCT[ct, i_current_year] for ct in 1:data.n_conversion_technologies if ((data.vectorCT_O[ct] == data.storageEntityST[st]) && (data.vectorCT_D[ct] == "e"))) ) )
 
 
     # conversion from water to reserve (estimate)
     # the reserved water flow times the Water2Power yield has to be equal to the sum of operational and frequency reserves.
+    qreserve = model[:qreserve]
     @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators], qreserve[t, h] * data.kH[h] == data.reserveOUsedRatio * reserveOperatingH[t, h] + data.reserveFUsedRatio * reserveFrequencyH[t, h] )
 
 
     # water availability condition for reserve
     # the stored energy in the water needs to be greater than the produced energy and reserves combined.
+    storedH = model[:storedH]
     @constraint(model, [t in 1:data.n_timesteps, h in 1:data.n_hydro_generators; data.vMaxH[h] > 0.0], storedH[t, h] >= data.dt * (reserveOperatingH[t, h] + reserveFrequencyH[t, h] + powerH[t, h]) )
 
 
