@@ -11,12 +11,14 @@ import XLSX # used by DataInput.jl
 using DataFrames # used by DataInput.jl
 
 
+
 # Configuration
 abstract type AbstrConfiguration end
 struct SingleObjectiveBasicConfig <: AbstrConfiguration end
 struct SingleObjectiveMultiServiceConfig <: AbstrConfiguration end
 struct MultiObjectiveBasicConfig <: AbstrConfiguration end
 struct MultiObjectiveMultiServiceConfig <: AbstrConfiguration end
+
 
 
 # TODO: include codefiles containing other functionality
@@ -28,6 +30,11 @@ include("DataInput.jl")
 include("ModelVariables.jl")
 # MODEL CONSTRAINTS
 include("ModelConstraints.jl")
+# MODEL OBJECTIVE
+include("ModelObjective.jl")
+# MODEL TRANSITIONS
+include("ModelTransition.jl")
+
 
 
 # export statements
@@ -48,6 +55,8 @@ export MultiObjectiveMultiServiceConfig
 export build_base_model
 export add_model_variables
 export add_model_constraints
+export add_single_objective_constraints
+export add_multi_service_constraints
 export add_model_objective
 
 export write_results
@@ -55,6 +64,9 @@ export plot_data
 export plot_results
 export create_plots
 
+
+
+# TODO: remove these thest functions at some point...
 greet() = print("Hello World!")
 
 function function_to_test()::String
@@ -62,40 +74,62 @@ function function_to_test()::String
 end
 
 
+
 "Runs the entire simulation and plotting procedure depending on given arguments"
-function run_sim(args::Vector{String})
+function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig())
+
+    #TODO: maybe use some args::Vector{String} and do config this way...?
+
     @info "run_sim() called"
 
     # TODO: identify the correct configuration from the arguments:
-    config = SingleObjectiveBasicConfig()
+    #config = SingleObjectiveBasicConfig()
 
     # TODO: identify where to load the data from and load it:
     data = read_model_data()
 
-    # Build model depending on config and data
-    model = build_base_model(config, data)
+    # iterate through all years to be modeled
+    # for each year a model will be created, solved and the results carried to the next year
+    for y in 1:data.n_years
 
-    # add model variables and trivial bounds
-    add_model_variables(model, config, data)
+        # Build model depending on config and data
+        model = build_base_model(config, data)
 
-    @info "Added variables to the model:" model
+        # add model variables and trivial bounds
+        add_model_variables(model, config, data, y)
 
-    # add model constraints and equations
-    add_model_constraints(model, config, data)
-    # add model objective function
-    #add_model_objective(model, config, data)
+        # add model constraints and equations
+        add_model_constraints(model, config, data, y)
 
-    # solve the model
-    #JuMP.optimize!(model)
+        # TODO: add model objective function
+        add_model_objective(model, config)
+
+        # TODO: solve the model for current year
+        JuMP.optimize!(model)
+
+        # TODO: save variable data somewhere (new data type?)
+
+        # transition data to next year
+        #data_transition(model, config, data, y)
+
+        #TODO: remove:
+        break
+    end
+
+    # write all data to files
+    # plot all data
+    # plot some overarching figures
 
     # write output to file
     write_results(model, config, data, "ThisFileName")
     create_plots(model, config, data)
 
-
     @info "end of run_sim()"
     return nothing
 end
+
+# TODO: make all functions consistend by adding ! where arguments are mutated
+
 
 
 # MODEL BUILDING
@@ -106,19 +140,6 @@ function build_base_model(config::AbstrConfiguration, data::ModelData)::JuMP.Mod
 end
 
 
-# TODO: make all functions consistend by adding ! where arguments are mutated
-# Objective creation
-function add_model_objective(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
-    # TODO
-    #= from the knapsack example:
-    x = model[:x]
-    @objective(model, Max, sum(v.profit * x[k] for (k, v) in data.objects))
-    return
-    =#
-    @info "add_model_objective() called"
-    return
-end
-
 
 # RESULTS WRITING
 function write_results(model::JuMP.Model, config::AbstrConfiguration, data::ModelData, file_name::String)
@@ -126,16 +147,22 @@ function write_results(model::JuMP.Model, config::AbstrConfiguration, data::Mode
     return
 end
 
+
+
 # PLOTTING (DATA & RESULT)
 function plot_data(data::ModelData)
     @info "plot_data() called"
     return
 end
 
+
+
 function plot_results(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
     @info "plot_results() called"
     return
 end
+
+
 
 function create_plots(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
     @info "create_plots() called"
@@ -143,6 +170,7 @@ function create_plots(model::JuMP.Model, config::AbstrConfiguration, data::Model
     plot_results(model, config, data)
     return
 end
+
 
 
 end # module
