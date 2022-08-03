@@ -4,10 +4,10 @@
 """
 Read all input files and write all Data a new data structure.
 """
-function read_model_data()::ModelData
+function read_model_data(; folder::String = "data/TestScenario/input_data/")::ModelData
 
     # path to folder with input files
-    folder = "data/TestLocation/input_data/" # TODO: change into function argument
+    #folder = "data/Chile-Madhura/input_data/" # TODO: change into function argument in a way that makes sense...
 
     @info "enter read_model_data()"
 
