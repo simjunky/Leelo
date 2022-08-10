@@ -9,6 +9,7 @@ import CPLEX
 #using CSV #not used anymore
 import XLSX # used by DataInput.jl
 using DataFrames # used by DataInput.jl
+using HDF5
 
 
 
@@ -32,6 +33,8 @@ include("ModelVariables.jl")
 include("ModelConstraints.jl")
 # MODEL OBJECTIVE
 include("ModelObjective.jl")
+# WRITING MODEL VARIABLES TO FILE
+include("WriteVariables.jl")
 # MODEL TRANSITIONS
 include("ModelTransition.jl")
 
@@ -58,6 +61,8 @@ export add_model_constraints
 export add_single_objective_constraints
 export add_multi_service_constraints
 export add_model_objective
+
+export write_variables
 
 export write_results
 export plot_data
@@ -105,9 +110,10 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig())
         add_model_objective(model, config)
 
         # TODO: solve the model for current year
-        JuMP.optimize!(model)
+        optimize!(model)
 
         # TODO: save variable data somewhere (new data type?)
+        write_variables(model, data.years[y])
 
         # transition data to next year
         #data_transition(model, config, data, y)
@@ -134,8 +140,11 @@ end
 
 # MODEL BUILDING
 function build_base_model(config::AbstrConfiguration, data::ModelData)::JuMP.Model
+
+    # the direct model is used to avoid automatic bridging between the JuMP model and the solver.
     model = JuMP.direct_model(CPLEX.Optimizer())
     @info "Created model with CPLEX:" model
+
     return model
 end
 
