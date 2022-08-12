@@ -106,13 +106,13 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig())
         # add model constraints and equations
         add_model_constraints(model, config, data, y)
 
-        # TODO: add model objective function
+        # add model objective function
         add_model_objective(model, config)
 
-        # TODO: solve the model for current year
+        # solve the model for current year
         optimize!(model)
 
-        # TODO: save variable data somewhere (new data type?)
+        # save values of model variables in HDF5 file
         write_variables(model, data.years[y])
 
         # transition data to next year
