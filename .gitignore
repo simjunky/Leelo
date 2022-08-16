@@ -1,5 +1,4 @@
 testmodel.jl
 testcodefile.jl
 runsim.jl
-docs/build/*
 results.txt
