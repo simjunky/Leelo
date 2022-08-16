@@ -21,6 +21,7 @@ Problems or inconsistencies found in old, `GAMS`-implemented LEELO version. Prob
 11. Is Excels `InputsH`'s `Pmin(Data)` even used (seems as not) and what is the difference to `PMinH`?
 12. Why is there a need for an auxiliary ROR generator? (same with the dummy H)
 13. `EpsiolHydropeaking` and `EpsilonPMatter` (from Settings Excel) are seemingly unused?
+14. `peakLoad` is imported and has parameter in `ModelData.jl` but is otherwise seemingly unused.
 
 
 ## Open questions
@@ -38,6 +39,7 @@ Questions related to the understanding.
 9. Why are there still ROR within `InputsR` when they have a profile of 0 and instead are now in their own section?
 10. Why is Coal ramping daily using a 12h timeframe instead of 24h?
 11. Reserve Variables: How does frequency reserve work?
+12. Are comissioned Capacities already paid for? because they seem not forced as lower bound on the newly built capacities.
 
 
 ## Big To-Do's
