@@ -10,6 +10,8 @@ function write_variables(model::JuMP.Model, year::Int64; scenario_folder::String
 
     # TODO: maybe make sure that the created file actually has the .h5 or .hdf5 ending?
 
+    # TODO: write important data information to the HDF5 file: what variable, unit, what dimensions are what...
+
     # open the HDF5 file in create & write mode
     file = h5open(scenario_folder * "/" * file_name, "cw")
 
