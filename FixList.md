@@ -52,3 +52,4 @@ Some bigger To-Do's to keep in mind and not hide within the code.
 6. All the impact categories shit... from Dataimport to variables to constraints etc...
 7. `GHGOperationCT` is an input parameter that does not seem to have a corresponding model parameter...?
 8. `etaH` in Hydrocascades does not seem to have a corresponding model parameter...?
+9. tbd
