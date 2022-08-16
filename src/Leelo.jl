@@ -72,6 +72,11 @@ export create_plots
 
 
 # TODO: remove these thest functions at some point...
+"""
+    greet()
+
+Prints "Hello World!" to the console.
+"""
 greet() = print("Hello World!")
 
 function function_to_test()::String
@@ -80,7 +85,11 @@ end
 
 
 
-"Runs the entire simulation and plotting procedure depending on given arguments"
+"""
+    run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig())
+
+Runs the entire simulation and plotting procedure depending on given configuration `config`.
+"""
 function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig())
 
     #TODO: maybe use some args::Vector{String} and do config this way...?
