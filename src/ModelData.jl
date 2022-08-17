@@ -1,7 +1,23 @@
 
 # TODO: nice docstring
 """
-Blabla Docstring of ModelData struct...
+    ModelData
+
+The `ModelData` data structure contains all parameters needed by `Leelo`.
+
+# Fields
+
+
+
+**`interest_rate`** is the interest rate at which money can be borrowed. It is a scalar and unitless.
+
+...
+
+**`costCapG[g, y]`** is the capital cost of the conventional power plant g's installation in year y. *2-dimensional: [g, y] in [k Dollar per installed MW]*
+
+or (g, y) Capital cost of power plant g's installation in year y [k Dollar per installed MW]
+costCapG::Array{Float64, 2} ?
+
 """
 struct ModelData
 
