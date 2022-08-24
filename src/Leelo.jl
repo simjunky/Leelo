@@ -153,6 +153,38 @@ function build_base_model(config::AbstrConfiguration, data::ModelData)::JuMP.Mod
 
     # the direct model is used to avoid automatic bridging between the JuMP model and the solver.
     model = JuMP.direct_model(CPLEX.Optimizer())
+
+
+    # set the parameters of the CPLEX optimizer.
+    # these are chosen to match the ones found in the older implementation to ensure comparability.
+    # TODO: optimize these after comparisons have bee made and correctness has been established.
+    # parameter names according to the old C API: https://www.ibm.com/docs/en/icos/12.10.0?topic=cplex-list-parameters
+
+    # Controls which algorithm is used to solve continuous linear models or to solve the root relaxation of a MIP. 4 means Barrier algorithm.
+    set_optimizer_attribute(model, "CPX_PARAM_LPMETHOD", 4)
+
+    # Specifies type of optimality that CPLEX targets (optimal convex or first-order satisfaction) as it searches for a solution. 2 means it searches for a solution that satisfies first-order optimality conditions, but is not necessarily globally optimal.
+    set_optimizer_attribute(model, "CPXPARAM_OptimalityTarget", 2)
+
+    # Decides which crossover is performed at the end of a barrier optimization. 0 means CPLEX decides automatically.
+    set_optimizer_attribute(model, "CPX_PARAM_BARCROSSALG", 0)
+
+    # Specifies type of solution (basic or non basic) that CPLEX produces for a linear program (LP) or quadratic program (QP). 2 means CPLEX computes a primal-dual pair of solution-vectors.
+    set_optimizer_attribute(model, "CPXPARAM_SolutionType", 2)
+
+    # Decides how to scale the problem matrix. 1 means more aggressive scaling.
+    set_optimizer_attribute(model, "CPX_PARAM_SCAIND", 1)
+
+    # Emphasizes precision in numerically unstable or difficult problems. 1 means exercise extreme caution in computation.
+    set_optimizer_attribute(model, "CPX_PARAM_NUMERICALEMPHASIS", 1)
+
+    # Influences pivot selection during basis factoring. From 0.0001 to 0.99999, default would have been 0.01.
+    set_optimizer_attribute(model, "CPX_PARAM_EPMRK", 0.9999)
+
+    # Sets the tolerance on complementarity for convergence. The barrier algorithm terminates with an optimal solution if the relative complementarity is smaller than this value. Default would have been 1e-8.
+    set_optimizer_attribute(model, "CPX_PARAM_BAREPCOMP", 0.0001)
+
+    # TODO: remove unneeded output:
     @info "Created model with CPLEX:" model
 
     return model
