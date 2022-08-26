@@ -31,7 +31,7 @@ function data_transition(model::JuMP.Model, data::ModelData, i_current_year::Int
     # for every year left to compute, we update the existing capacities according to the newly built ones.
     # Also the newly built capacities are added to the phase out capacities when their lifetime is over.
     # Note: there are no phase outs for hydropower and power lines
-    for i in i_current_year:(data.n_years - 1)
+    for i in 1:(data.n_years - i_current_year)
 
         # update existing capacities for conventional generators (all years until the end of life)
         data.pexistingG[:, :, i_current_year + i] = data.pexistingG[:, :, i_current_year + i] + value.(pG) .* transpose(data.years[i_current_year + i] .<= data.years[i_current_year] .+ data.lifetimeG[:, i_current_year])
