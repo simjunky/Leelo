@@ -9,7 +9,8 @@ import CPLEX
 import XLSX # used by DataInput.jl
 using DataFrames # used by DataInput.jl
 using HDF5 # used for saving variable results by WriteVariables.jl and Visualization.jl
-using Plots # for visualizing data, used by Visualization.jl
+import Plots # for visualizing data, used by Visualization.jl
+import StatsPlots # for visualizing data, used by Visualization.jl
 
 
 
@@ -66,12 +67,11 @@ export add_model_objective
 
 export write_variables
 export data_transition
+export create_plots
 
 
 export write_results
-export plot_data
-export plot_results
-export create_plots
+
 
 
 
@@ -141,7 +141,7 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), sc
         data_transition(model, data, y)
 
         #TODO: remove:
-        break
+        #break
     end
 
     # TODO:
