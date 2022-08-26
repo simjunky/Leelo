@@ -6,10 +6,10 @@ using JuMP
 import CPLEX
 
 # TODO: change using statements to import statements and use dot notation to keep namespace clean
-#using CSV #not used anymore
 import XLSX # used by DataInput.jl
 using DataFrames # used by DataInput.jl
-using HDF5
+using HDF5 # used for saving variable results by WriteVariables.jl and Visualization.jl
+using Plots # for visualizing data, used by Visualization.jl
 
 
 
@@ -37,6 +37,8 @@ include("ModelObjective.jl")
 include("WriteVariables.jl")
 # MODEL TRANSITIONS
 include("ModelTransition.jl")
+# PLOTTING
+include("Visualization.jl")
 
 
 
@@ -65,6 +67,7 @@ export add_model_objective
 export write_variables
 export data_transition
 
+
 export write_results
 export plot_data
 export plot_results
@@ -72,7 +75,7 @@ export create_plots
 
 
 
-# TODO: remove these thest functions at some point...
+# TODO: remove these these two functions at some point...
 """
     greet()
 
@@ -87,11 +90,18 @@ end
 
 
 """
-    run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig())
+    run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), scenario_dir::String = "data/TestScenario/input_data/")
 
 Runs the entire simulation and plotting procedure depending on given configuration `config`.
+
+# Keywords
+
+**`config`** is the configuration specifying what the optimization objective is.
+
+**`scenario_dir`** is the relative path to the directory, which contains the scenario's parameter files.
+
 """
-function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig())
+function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), scenario_dir::String = "data/TestScenario/input_data/")
 
     #TODO: maybe use some args::Vector{String} and do config this way...?
 
@@ -101,7 +111,7 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig())
     #config = SingleObjectiveBasicConfig()
 
     # TODO: identify where to load the data from and load it:
-    data = read_model_data()
+    data = read_model_data(folder = scenario_dir)
 
     # iterate through all years to be modeled
     # for each year a model will be created, solved and the results carried to the next year
@@ -119,26 +129,27 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig())
         # add model objective function
         add_model_objective(model, config)
 
+        @info "Created model overview:" model
+
         # solve the model for current year
         optimize!(model)
 
         # save values of model variables in HDF5 file
-        write_variables(model, data.years[y])
+        write_variables(model, data, y)
 
         # transition data to next year
-        #data_transition(model, config, data, y)
+        data_transition(model, data, y)
 
         #TODO: remove:
         break
     end
 
-    # write all data to files
+    # TODO:
+    # write parameter data to file
     # plot all data
     # plot some overarching figures
 
-    # write output to file
-    write_results(model, config, data, "ThisFileName")
-    create_plots(model, config, data)
+    create_plots(data)
 
     @info "end of run_sim()"
     return nothing
@@ -184,9 +195,6 @@ function build_base_model(config::AbstrConfiguration, data::ModelData)::JuMP.Mod
     # Sets the tolerance on complementarity for convergence. The barrier algorithm terminates with an optimal solution if the relative complementarity is smaller than this value. Default would have been 1e-8.
     set_optimizer_attribute(model, "CPX_PARAM_BAREPCOMP", 0.0001)
 
-    # TODO: remove unneeded output:
-    @info "Created model with CPLEX:" model
-
     return model
 end
 
@@ -200,27 +208,8 @@ end
 
 
 
-# PLOTTING (DATA & RESULT)
-function plot_data(data::ModelData)
-    @info "plot_data() called"
-    return
-end
 
 
-
-function plot_results(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
-    @info "plot_results() called"
-    return
-end
-
-
-
-function create_plots(model::JuMP.Model, config::AbstrConfiguration, data::ModelData)
-    @info "create_plots() called"
-    plot_data(data)
-    plot_results(model, config, data)
-    return
-end
 
 
 

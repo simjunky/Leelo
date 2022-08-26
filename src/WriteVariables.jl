@@ -3,7 +3,7 @@
 """
 TODO
 """
-function write_variables(model::JuMP.Model, year::Int64; scenario_folder::String = "data/TestScenario/output_data", file_name::String = "model_variables.h5")
+function write_variables(model::JuMP.Model, data::ModelData, i_current_year::Int64; scenario_folder::String = "data/TestScenario/output_data", file_name::String = "model_variables.h5")
 
     # TODO: remove unneeded outputs
     @info "writing model variables to file"
@@ -12,8 +12,11 @@ function write_variables(model::JuMP.Model, year::Int64; scenario_folder::String
 
     # TODO: write important data information to the HDF5 file: what variable, unit, what dimensions are what...
 
-    # open the HDF5 file in create & write mode
-    file = h5open(scenario_folder * "/" * file_name, "cw")
+    # open the HDF5 file
+    # if the current year is the first one, delete existing content, else append in create & write mode
+    file = h5open(scenario_folder * "/" * file_name, (i_current_year == 1 ? "w" : "cw"))
+
+    year = data.years[i_current_year]
 
     # all variables of the model are in a group named after the modeled year.
     create_group(file, "model" * string(year))
