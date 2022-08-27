@@ -92,16 +92,16 @@ end
 """
     run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), scenario_dir::String = "data/TestScenario/input_data/")
 
-Runs the entire simulation and plotting procedure depending on given configuration `config`.
+Runs the entire simulation and plotting procedure depending on a given configuration `config`.
 
 # Keywords
 
 **`config`** is the configuration specifying what the optimization objective is.
 
-**`scenario_dir`** is the relative path to the directory, which contains the scenario's parameter files.
+**`scenario_dir`** is the relative path to the chosen scenarios directory. This directory must contain the scenario's parameter files inside an `input_data` sub-directory.
 
 """
-function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), scenario_dir::String = "data/TestScenario/input_data/")
+function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), scenario_dir::String = "data/TestScenario")
 
     #TODO: maybe use some args::Vector{String} and do config this way...?
 
@@ -111,14 +111,14 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), sc
     #config = SingleObjectiveBasicConfig()
 
     # TODO: identify where to load the data from and load it:
-    data = read_model_data(folder = scenario_dir)
+    data = read_model_data(scenario_dir = scenario_dir)
 
     # iterate through all years to be modeled
     # for each year a model will be created, solved and the results carried to the next year
     for y in 1:data.n_years
 
-        # Build model depending on config and data
-        model = build_base_model(config, data)
+        # Build an empty model and set optimizer parameters
+        model = build_base_model()
 
         # add model variables and trivial bounds
         add_model_variables(model, config, data, y)
@@ -135,13 +135,10 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), sc
         optimize!(model)
 
         # save values of model variables in HDF5 file
-        write_variables(model, data, y)
+        write_variables(model, data, y, scenario_dir = scenario_dir)
 
         # transition data to next year
         data_transition(model, data, y)
-
-        #TODO: remove:
-        #break
     end
 
     # TODO:
@@ -160,7 +157,13 @@ end
 
 
 # MODEL BUILDING
-function build_base_model(config::AbstrConfiguration, data::ModelData)::JuMP.Model
+"""
+    build_base_model()::JuMP.Model
+
+This function creates an empty `JuMP.Model` using the `CPLEX` optimizer. It also sets some optimizer parameters, e.g. convergence tolerance.
+
+"""
+function build_base_model()::JuMP.Model
 
     # the direct model is used to avoid automatic bridging between the JuMP model and the solver.
     model = JuMP.direct_model(CPLEX.Optimizer())

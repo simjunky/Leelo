@@ -6,9 +6,9 @@ This is the function called to transition the data from one year to the next to 
 
 # Keywords
 
-**`model`** is the `JuMP` model containing all constraints and variables of the current year. For this function to be called, the `optimize!()` function has to already been called, such that the model variables have a value accessible by the `value()` function.
+**`model`** is the `JuMP` model containing all constraints and variables of the current year. For this function to be called, the `optimize!()` function has to already been called, such that the model variables have values accessible by the `value()` function.
 
-**`data`** is the datastructure containing all the parameters of the model and of the type `ModelData`.
+**`data`** is the data structure containing all the parameters of the model and of the type `ModelData`.
 
 **`i_current_year`** is the index of the current year in `data.years`.
 

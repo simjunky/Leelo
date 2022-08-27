@@ -1,14 +1,25 @@
-# TODO: write Docstring
+
 """
-TODO
+    create_plots(data::ModelData; scenario_dir::String = "data/TestScenario", file_name::String = "model_variables.h5")
+
+This function creates plots of the simulation results by calling all individual plot functions. All plots are saved as `PDF` into the `plots` sub-directory. This function sets the general theme of the individual plots.
+
+# Keywords
+
+**`data`** is the data structure containing all the parameters of the model and of the type `ModelData`.
+
+**`scenario_dir`** is a `String` containing the relative path to the chosen scenarios directory. The `HDF5` file must be inside a `output_data` sub-directory.
+
+**`file_name`** is a `String` containing the name of `HDF5` file. It defaults to `model_variables.h5`.
+
 """
-function create_plots(data::ModelData; scenario_dir::String = "data/TestScenario", output_sub_dir::String = "output_data", file_name::String = "model_variables.h5")
+function create_plots(data::ModelData; scenario_dir::String = "data/TestScenario", file_name::String = "model_variables.h5")
 
     # TODO: remove unneeded outputs
     @info "create_plots() called"
 
     # open file containing variable values in read-only mode
-    file_location = scenario_dir * "/" * output_sub_dir * "/" * file_name
+    file_location = scenario_dir * "/output_data/" * file_name
     file = h5open(file_location, "r")
 
     # create directory to save plot files in, if it doesnt exist

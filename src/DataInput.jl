@@ -1,25 +1,63 @@
 
-
-# TODO: write better, more detailed DocString
 """
-Read all input files and write all Data a new data structure.
+    read_model_data(; scenario_dir::String = "data/TestScenario")::ModelData
+
+This function reads all input files and writes the parameter data into a `ModelData` data structure.
+
+# Keywords
+
+**`scenario_dir`** is a `String` containing the relative path to the chosen scenarios directory. The input files must be inside a `input_data` sub-directory and named as specified below.
+
+# Predefined Input File Names
+
+The input files must be inside a `input_data` sub-directory and named as specified below. Two examples are at `data/Chile-Madhura` and `data/TestScenario`. The latter one being drastically reduced in size.
+
+**`scenario_settings.xlsx`** contains basic information like the numer and resolution of timesteps, or number of nodes, as well as general model parameters e.g. regarding carbon tax or interest rate.
+
+**`conventional generators.xlsx`** contains all parameters regarding carbon emitting conventional generators, i.e. coal and gas. Parameter examples are the capital cost of installing and operating these power plants as well as their emissions.
+
+**'conversion_technologies.xlsx'** contain all parameters regarding conversion technologies, which convert power into resources or the other way round. These can include chargers for batteries, water pumps for pumped hydro power, electrolyzers for hydrogen production and many more depending on the model. Parameter examples are their in- and output resources, operating costs and efficiencies.
+
+**`CSP_profiles.xlsx`** contains the factor of usable concentrated solar power for each timestep, assuming fixed mirrors. It is separate from the regular solar power tracking because there single axis tracking is assumed.
+
+**`demand_profiles`** contains the power demand in every timestep of ervery node and year.
+
+**`hydro_cascades.xlsx`** contains the existing hydro power plants, their location and interconnectivity. Other parameters include reservoir size, losses and conversion efficiencies and more.
+
+**`hydro_cascades_profiles.xlsx`** contains the water inflow into each hydro power reservoir for each timestep.
+
+**`hydro_run_of_river.xlsx`** contains the lumped run-of-river hydropower plants for each node.
+
+**`hydro_run_of_river_profiles.xlsx`** contains the factor of usable installed river hydro power capacity for each timestep.
+
+**`preexisting_capacities.xlsx`** contains the already existing and projected power capacities for every power source (conventional, renewable, etc.) for every node and year.
+
+**`renewable_generators.xlsx`** contains all parameters regarding renewable power plants, like solar and wind.
+
+**`renwable_profiles.xlsx`** contains the factor of usable power for every renewable generator for every timestep in every node.
+
+**`storage_technologies.xlsx`** contains all parameters regarding different storage technologies, e.g. Li-ion-batteries
+
+**`transmission_lines.xlsx`** contains all node-connecting power lines of the model, which nodes they connect, as well as their size, lengths, costs, losses and more.
+
 """
-function read_model_data(; folder::String = "data/TestScenario/input_data/")::ModelData
+function read_model_data(; scenario_dir::String = "data/TestScenario")::ModelData
 
-    # path to folder with input files
-    #folder = "data/Chile-Madhura/input_data/" # TODO: change into function argument in a way that makes sense...
-
+    # TODO: remove unneeded output at some point:
     @info "enter read_model_data()"
 
+    # specify the directory, which must contain the input files
+    input_dir = scenario_dir * "/input_data/"
+
     # filename of file containing scenario setting parameters
-    scenario_parameter_file = folder * "scenario_settings.xlsx"
+    scenario_parameter_file = input_dir * "scenario_settings.xlsx"
 
     # create DataFrame containing data of conventional generators
     scenario_setting_data = DataFrame(XLSX.readtable(scenario_parameter_file, "Tabelle1", infer_eltypes = true)...)
 
 
     # filename of file containing parameters of conventional generators
-    conv_generator_parameter_file = folder * "conventional_generators.xlsx"
+    conv_generator_parameter_file = input_dir * "conventional_generators.xlsx"
 
     # create DataFrame containing data of conventional generators
     conv_generator_data = DataFrame(XLSX.readtable(conv_generator_parameter_file, "Tabelle1", infer_eltypes = true)...)
@@ -27,7 +65,7 @@ function read_model_data(; folder::String = "data/TestScenario/input_data/")::Mo
 
 
     # filename of file containing parameters of renewable generators
-    ren_generator_parameter_file = folder * "renewable_generators.xlsx"
+    ren_generator_parameter_file = input_dir * "renewable_generators.xlsx"
 
     # create DataFrame containing data of renewable generators
     ren_generator_data = DataFrame(XLSX.readtable(ren_generator_parameter_file, "Tabelle1", infer_eltypes = true)...)
@@ -35,7 +73,7 @@ function read_model_data(; folder::String = "data/TestScenario/input_data/")::Mo
 
 
     # filename of file containing parameters of conversion technologies
-    converter_parameter_file = folder * "conversion_technologies.xlsx"
+    converter_parameter_file = input_dir * "conversion_technologies.xlsx"
 
     # create DataFrame containing data of conversion technologies
     converter_data = DataFrame(XLSX.readtable(converter_parameter_file, "Tabelle1", infer_eltypes = true)...)
@@ -43,7 +81,7 @@ function read_model_data(; folder::String = "data/TestScenario/input_data/")::Mo
 
 
     # filename of file containing parameters of storage technologies
-    storage_parameter_file = folder * "storage_technologies.xlsx"
+    storage_parameter_file = input_dir * "storage_technologies.xlsx"
 
     # create DataFrame containing data of conversion technologies
     storage_data = DataFrame(XLSX.readtable(storage_parameter_file, "Tabelle1", infer_eltypes = true)...)
@@ -51,7 +89,7 @@ function read_model_data(; folder::String = "data/TestScenario/input_data/")::Mo
 
 
     # filename of file containing parameters of transmission lines
-    transmission_parameter_file = folder * "transmission_lines.xlsx"
+    transmission_parameter_file = input_dir * "transmission_lines.xlsx"
 
     # create DataFrame containing data of transmission lines
     transmission_data = DataFrame(XLSX.readtable(transmission_parameter_file, "Tabelle1", infer_eltypes = true)...)
@@ -59,7 +97,7 @@ function read_model_data(; folder::String = "data/TestScenario/input_data/")::Mo
 
 
     # filename of file containing electricity demand profiles
-    demand_profile_file = folder * "demand_profiles.xlsx"
+    demand_profile_file = input_dir * "demand_profiles.xlsx"
 
     # create DataFrame containing demand profiles data
     demand_profile_data = DataFrame(XLSX.readtable(demand_profile_file, "Tabelle1", infer_eltypes = true)...)
@@ -67,7 +105,7 @@ function read_model_data(; folder::String = "data/TestScenario/input_data/")::Mo
 
 
     # filename of file containing data of hydropower cascades
-    hydro_cascades_file = folder * "hydro_cascades.xlsx"
+    hydro_cascades_file = input_dir * "hydro_cascades.xlsx"
 
     # create DataFrame containing data of hydropower cascades
     hydro_cascades_data = DataFrame(XLSX.readtable(hydro_cascades_file, "Tabelle1", infer_eltypes = true)...)
@@ -75,38 +113,38 @@ function read_model_data(; folder::String = "data/TestScenario/input_data/")::Mo
 
 
     # filename of file containing data of run of river generators
-    hydro_ROR_file = folder * "hydro_run_of_river.xlsx"
+    hydro_ROR_file = input_dir * "hydro_run_of_river.xlsx"
 
     # create DataFrame containing data of run of river generators
     hydro_ROR_data = DataFrame(XLSX.readtable(hydro_ROR_file, "Tabelle1", infer_eltypes = true)...)
     #CSV.read(hydro_ROR_file, DataFrame; delim = ',', header = 1, types = Dict(:ror_name=>String, :BusRoR=>String))
 
     # filename of file containing data of preexisting capacities
-    existing_capacity_file = folder * "preexisting_capacities.xlsx"
+    existing_capacity_file = input_dir * "preexisting_capacities.xlsx"
 
     # create DataFrame containing data of existing capacities
     existing_capacity_data = DataFrame(XLSX.readtable(existing_capacity_file, "Tabelle1", infer_eltypes = true)...)
 
     # filename of file containing data of renewable generator profiles
-    renewable_profiles_file = folder * "renewable_profiles.xlsx"
+    renewable_profiles_file = input_dir * "renewable_profiles.xlsx"
 
     # create DataFrame containing data of renewable power generator profiles
     renewable_profiles_data = DataFrame(XLSX.readtable(renewable_profiles_file, "Tabelle1", infer_eltypes = true)...)
 
     # filename of file containing data of csp profiles
-    csp_profiles_file = folder * "CSP_profiles.xlsx"
+    csp_profiles_file = input_dir * "CSP_profiles.xlsx"
 
     # create DataFrame containing data of csp profiles
     csp_profiles_data = DataFrame(XLSX.readtable(csp_profiles_file, "Tabelle1", infer_eltypes = true)...)
 
     # filename of file containing data of hydro cascades profiles
-    hydro_cascades_profiles_file = folder * "hydro_cascades_profiles.xlsx"
+    hydro_cascades_profiles_file = input_dir * "hydro_cascades_profiles.xlsx"
 
     # create DataFrame containing data of hydro cascade profiles
     hydro_cascades_profiles_data = DataFrame(XLSX.readtable(hydro_cascades_profiles_file, "Tabelle1", infer_eltypes = true)...)
 
     # filename of file containing data of hydro cascades profiles
-    hydro_RoR_profiles_file = folder * "hydro_run_of_river_profiles.xlsx"
+    hydro_RoR_profiles_file = input_dir * "hydro_run_of_river_profiles.xlsx"
 
     # create DataFrame containing data of hydro cascade profiles
     hydro_RoR_profiles_data = DataFrame(XLSX.readtable(hydro_RoR_profiles_file, "Tabelle1", infer_eltypes = true)...)
