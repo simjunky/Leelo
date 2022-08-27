@@ -96,7 +96,14 @@ end
 """
     run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), scenario_dir::String = "data/TestScenario/input_data/")
 
-Runs the entire simulation and plotting procedure depending on a given configuration `config`.
+This function runs the entire simulation and plotting procedure depending on a given configuration `config` and the scenario specified by `scenario_dir`.
+
+# Short Procedure Description
+
+Parameter data is read from the input files in the scenario `input_data` directory.
+Then, for every benchmark year of the simulation, a new `JuMP` model is built (`build_base_model`), populated with variables (`add_model_variables`), constraints (`add_model_constraints`) and an objective (`add_model_objective`) and then run (`optimize!`). The result from the optimization is saved (`write_variables`) and lastly the parameters prepared for the next benchmark year (`data_transition`).
+After the final year the final parameters are saved together with the yearly optimization results (`write_parameters`).
+Lastly, plots are created from the saved data (`create_plots`).
 
 # Arguments
 
@@ -117,6 +124,9 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), sc
     # TODO: identify where to load the data from and load it:
     data = read_model_parameters(scenario_dir = scenario_dir)
 
+    # TODO: remove unneeded output
+    @info data
+
     # iterate through all years to be modeled
     # for each year a model will be created, solved and the results carried to the next year
     for y in 1:data.n_years
@@ -133,10 +143,16 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), sc
         # add model objective function
         add_model_objective(model, config)
 
-        @info "Created model overview:" model
+        @info "Created model:" model
 
         # solve the model for current year
         optimize!(model)
+
+        if termination_status(model) != OPTIMAL
+            @error "The model could not be solved correctly"
+            @info "Termination Status:" termination_status(model)
+            return nothing
+        end
 
         # save values of model variables in HDF5 file
         write_variables(model, data, y, scenario_dir = scenario_dir)
