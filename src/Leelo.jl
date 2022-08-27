@@ -23,7 +23,7 @@ struct MultiObjectiveMultiServiceConfig <: AbstrConfiguration end
 
 
 
-# TODO: include codefiles containing other functionality
+
 # DATA STRUCTURE
 include("ModelData.jl")
 # DATA IMPORTS
@@ -45,6 +45,8 @@ include("WriteParameters.jl")
 
 
 
+
+# TODO: make all functions consistend by adding ! where arguments are mutated
 # export statements
 export greet
 export function_to_test
@@ -87,6 +89,7 @@ greet() = print("Hello World!")
 function function_to_test()::String
     return "Result-String"
 end
+
 
 
 
@@ -156,7 +159,6 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), sc
     return nothing
 end
 
-# TODO: make all functions consistend by adding ! where arguments are mutated
 
 
 
@@ -204,18 +206,6 @@ function build_base_model()::JuMP.Model
 
     return model
 end
-
-
-
-# RESULTS WRITING
-function write_results(model::JuMP.Model, config::AbstrConfiguration, data::ModelData, file_name::String)
-    @info "write_results() called for file " * file_name
-    return
-end
-
-
-
-
 
 
 

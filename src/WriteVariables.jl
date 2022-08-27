@@ -1,6 +1,6 @@
 
 """
-    write_variables(model::JuMP.Model, data::ModelData, i_current_year::Int64; scenario_dir::String = "data/TestScenario", file_name::String = "model_variables.h5")
+    write_variables(model::JuMP.Model, data::ModelData, i_current_year::Int64; scenario_dir::String = "data/TestScenario", file_name::String = "model_results.h5")
 
 This function writes the values of the models variables into a `HDF5` file, after they have been set by the optimization.
 
@@ -14,10 +14,10 @@ This function writes the values of the models variables into a `HDF5` file, afte
 
 **`scenario_dir`** is a `String` containing the relative path to the chosen scenarios directory. The written output file will be inside a `output_data` sub-directory.
 
-**`file_name`** is the name of the created file. It defaults to `model_variables.h5`.
+**`file_name`** is the name of the created file. It defaults to `model_results.h5`.
 
 """
-function write_variables(model::JuMP.Model, data::ModelData, i_current_year::Int64; scenario_dir::String = "data/TestScenario", file_name::String = "model_variables.h5")
+function write_variables(model::JuMP.Model, data::ModelData, i_current_year::Int64; scenario_dir::String = "data/TestScenario", file_name::String = "model_results.h5")
 
     # TODO: remove unneeded outputs
     @info "writing model variables to file"
