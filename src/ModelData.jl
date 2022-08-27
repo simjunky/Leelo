@@ -776,8 +776,31 @@ end
 
 
 
-# add custom printing to our struct:
+"""
+    Base.show(io::IO, data::ModelData)
+
+This overloads `Base.show`. The `REPL` returns the output of `show` as a string. Thereby this function adds custom printing to the `ModelData` struct.
+It provides a short overview of the covered years, nodes and number of different technologies.
+
+# Keywords
+
+**`io`** is the output stream to which the model summary is written.
+
+**`data` is the data structure containing all the parameters of the model to be printed and is of the type `ModelData`.
+
+"""
 function Base.show(io::IO, data::ModelData)
-    # TODO: either remove this function or fill it with usefull output!
-    println(io, "Attempt to print Model Data. Meaningfull information TBD...")
+
+    # provide a short overview over the model
+    println(io,
+    "Leelo.ModelData:\nModel covering the years:" * join( " " .* string.(data.years)) * "\n" *
+    "Model contains\n    " *
+    string(data.n_buses) * " nodes\n    " *
+    string(data.n_conv_generators) * " conventional generators\n    " *
+    string(data.n_ren_generators) * " renewable generators\n    " *
+    string(data.n_hydro_generators) * " hydro generators\n    " *
+    string(data.n_ror_generators) * " run-of-river generators\n    " *
+    string(data.n_conversion_technologies) * " conversion technologies\n    " *
+    string(data.n_storage_technologies) * " storage technologies\n    " *
+    string(data.n_lines) * " power lines")
 end
