@@ -4,7 +4,7 @@
 
 This function writes selected model parameters into a `HDF5` file. Currently only existing capacities are saved. This function should only be called after the simulation of every benchmark year has terminated, such that all parameters are up to date.
 
-# Keywords
+# Arguments
 
 **`data`** is the data structure containing all the parameters of the model and is of the type `ModelData`.
 

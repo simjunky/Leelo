@@ -4,7 +4,7 @@
 
 This function reads all input files and writes the parameter data into a `ModelData` data structure.
 
-# Keywords
+# Arguments
 
 **`scenario_dir`** is a `String` containing the relative path to the chosen scenarios directory. The input files must be inside a `input_data` sub-directory and named as specified below.
 

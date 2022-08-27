@@ -4,7 +4,7 @@
 
 This function creates plots of the simulation results by calling all individual plot functions. All plots are saved as `PDF` into the `plots` sub-directory. This function sets the general theme of the individual plots.
 
-# Keywords
+# Arguments
 
 **`data`** is the data structure containing all the parameters of the model and is of the type `ModelData`.
 
@@ -56,7 +56,7 @@ end
 
 This function creates a plot of the systems total cost over the years and saves it into a `.PDF` file. Additionally the total investment, oparating and carbon tax costs are plotted as well.
 
-# Keywords
+# Arguments
 
 **`data`** is the datastructure containing all the parameters of the model and of the type `ModelData`.
 
@@ -102,7 +102,7 @@ end
 
 This function creates a stacked bar plot of the produced power by each power source and saves it into a `.PDF` file.
 
-# Keywords
+# Arguments
 
 **`data`** is the datastructure containing all the parameters of the model and of the type `ModelData`.
 
@@ -153,7 +153,7 @@ end
 
 This function creates a stacked bar plot of the newly built capacities of each power source and saves it into a `.PDF` file.
 
-# Keywords
+# Arguments
 
 **`data`** is the datastructure containing all the parameters of the model and of the type `ModelData`.
 

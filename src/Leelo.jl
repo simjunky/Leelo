@@ -98,7 +98,7 @@ end
 
 Runs the entire simulation and plotting procedure depending on a given configuration `config`.
 
-# Keywords
+# Arguments
 
 **`config`** is the configuration specifying what the optimization objective is.
 

@@ -4,7 +4,7 @@
 
 This function writes the values of the models variables into a `HDF5` file, after they have been set by the optimization.
 
-# Keywords
+# Arguments
 
 **`model`** is the `JuMP` model containing all constraints and variables of the current year. For this function to be called, the `optimize!()` function has to already been called, such that the model variables have values accessible by the `value()` function.
 

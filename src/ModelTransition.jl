@@ -4,7 +4,7 @@
 
 This is the function called to transition the data from one year to the next to prepare the next simulation. It updates existing capacities and phase outs.
 
-# Keywords
+# Arguments
 
 **`model`** is the `JuMP` model containing all constraints and variables of the current year. For this function to be called, the `optimize!()` function has to already been called, such that the model variables have values accessible by the `value()` function.
 

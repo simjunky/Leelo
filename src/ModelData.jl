@@ -782,7 +782,7 @@ end
 This overloads `Base.show`. The `REPL` returns the output of `show` as a string. Thereby this function adds custom printing to the `ModelData` struct.
 It provides a short overview of the covered years, nodes and number of different technologies.
 
-# Keywords
+# Arguments
 
 **`io`** is the output stream to which the model summary is written.
 
