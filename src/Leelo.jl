@@ -27,7 +27,7 @@ struct MultiObjectiveMultiServiceConfig <: AbstrConfiguration end
 # DATA STRUCTURE
 include("ModelData.jl")
 # DATA IMPORTS
-include("DataInput.jl")
+include("ReadParameters.jl")
 # MODEL VARIABLES
 include("ModelVariables.jl")
 # MODEL CONSTRAINTS
@@ -40,6 +40,8 @@ include("WriteVariables.jl")
 include("ModelTransition.jl")
 # PLOTTING
 include("Visualization.jl")
+# WRITING MODEL PARAMETERS TO FILE
+include("WriteParameters.jl")
 
 
 
@@ -50,7 +52,7 @@ export function_to_test
 export run_sim
 
 export ModelData
-export read_model_data
+export read_model_parameters
 
 export AbstrConfiguration
 export SingleObjectiveBasicConfig
@@ -67,10 +69,9 @@ export add_model_objective
 
 export write_variables
 export data_transition
+
+export write_parameters
 export create_plots
-
-
-export write_results
 
 
 
@@ -111,7 +112,7 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), sc
     #config = SingleObjectiveBasicConfig()
 
     # TODO: identify where to load the data from and load it:
-    data = read_model_data(scenario_dir = scenario_dir)
+    data = read_model_parameters(scenario_dir = scenario_dir)
 
     # iterate through all years to be modeled
     # for each year a model will be created, solved and the results carried to the next year
@@ -141,7 +142,10 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), sc
         data_transition(model, data, y)
     end
 
-    # TODO:
+    # after all simulations write existing capacities of each years to file
+    write_parameters(data, scenario_dir = scenario_dir)
+
+    # TODO: WRITE CAPAS to file!!!
     # write parameter data to file
     # plot all data
     # plot some overarching figures

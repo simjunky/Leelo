@@ -1,6 +1,6 @@
 
 """
-    read_model_data(; scenario_dir::String = "data/TestScenario")::ModelData
+    read_model_parameters(; scenario_dir::String = "data/TestScenario")::ModelData
 
 This function reads all input files and writes the parameter data into a `ModelData` data structure.
 
@@ -41,10 +41,10 @@ The input files must be inside a `input_data` sub-directory and named as specifi
 **`transmission_lines.xlsx`** contains all node-connecting power lines of the model, which nodes they connect, as well as their size, lengths, costs, losses and more.
 
 """
-function read_model_data(; scenario_dir::String = "data/TestScenario")::ModelData
+function read_model_parameters(; scenario_dir::String = "data/TestScenario")::ModelData
 
     # TODO: remove unneeded output at some point:
-    @info "enter read_model_data()"
+    @info "enter read_model_parameters()"
 
     # specify the directory, which must contain the input files
     input_dir = scenario_dir * "/input_data/"
