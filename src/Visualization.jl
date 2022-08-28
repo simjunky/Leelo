@@ -1,19 +1,17 @@
 
 """
-    create_plots(data::ModelData; scenario_dir::String = "data/TestScenario", file_name::String = "model_results.h5")
+    create_plots(; scenario_dir::String = "data/TestScenario", file_name::String = "model_results.h5")
 
 This function creates plots of the simulation results by calling all individual plot functions. All plots are saved as `PDF` into the `plots` sub-directory. This function sets the general theme of the individual plots.
 
 # Arguments
-
-**`data`** is the data structure containing all the parameters of the model and is of the type `ModelData`.
 
 **`scenario_dir`** is a `String` containing the relative path to the chosen scenarios directory. The `HDF5` file must be inside a `output_data` sub-directory.
 
 **`file_name`** is a `String` containing the name of `HDF5` file. It defaults to `model_results.h5`.
 
 """
-function create_plots(data::ModelData; scenario_dir::String = "data/TestScenario", file_name::String = "model_results.h5")
+function create_plots(; scenario_dir::String = "data/TestScenario", file_name::String = "model_results.h5")
 
     # TODO: remove unneeded outputs
     @info "create_plots() called"
@@ -32,9 +30,9 @@ function create_plots(data::ModelData; scenario_dir::String = "data/TestScenario
     Plots.theme(:default, palette = [:darkorange1, :deepskyblue, :lawngreen, :red2, :cyan, :magenta2])
 
     # call plotting sub-functions.
-    plot_total_cost(data, file, target_dir)
-    plot_power_production(data, file, target_dir)
-    plot_built_capacities(data, file, target_dir)
+    plot_total_cost(file, target_dir)
+    plot_power_production(file, target_dir)
+    plot_built_capacities(file, target_dir)
 
     # TODO: add more functions and plots:
     # Storage by type (Ex+new capa)
@@ -52,20 +50,18 @@ end
 
 
 """
-    plot_total_cost(data::ModelData, file::HDF5.File, target_dir::String)
+    plot_total_cost(file::HDF5.File, target_dir::String)
 
 This function creates a plot of the systems total cost over the years and saves it into a `.PDF` file. Additionally the total investment, oparating and carbon tax costs are plotted as well.
 
 # Arguments
-
-**`data`** is the datastructure containing all the parameters of the model and of the type `ModelData`.
 
 **`file`** is the `HDF5`-file containing the results of the simulation.
 
 **`target_dir`** is the directory in which to save the plot to.
 
 """
-function plot_total_cost(data::ModelData, file::HDF5.File, target_dir::String)
+function plot_total_cost(file::HDF5.File, target_dir::String)
 
     # TODO: remove unneeded output:
     @info "plotted total cost"
@@ -76,9 +72,10 @@ function plot_total_cost(data::ModelData, file::HDF5.File, target_dir::String)
     plot_file_name = "total_cost_yearly.pdf"
 
     # read data from file
-    x = data.years
-    y = zeros(Float64, (data.n_years, 4))
-    for i in 1:data.n_years
+    x = read(file["parameters"], "years")
+    n_years = length(x)
+    y = zeros(Float64, (n_years, 4))
+    for i in 1:n_years
         y[i, 1] = read(file["model" * string(x[i])], "TotalCost")
         y[i, 2] = read(file["model" * string(x[i])], "ICt")
         y[i, 3] = read(file["model" * string(x[i])], "OCt")
@@ -98,20 +95,18 @@ end
 
 
 """
-    plot_power_production(data::ModelData, file::HDF5.File, target_dir::String)
+    plot_power_production(file::HDF5.File, target_dir::String)
 
 This function creates a stacked bar plot of the produced power by each power source and saves it into a `.PDF` file.
 
 # Arguments
-
-**`data`** is the datastructure containing all the parameters of the model and of the type `ModelData`.
 
 **`file`** is the `HDF5`-file containing the results of the simulation.
 
 **`target_dir`** is the directory in which to save the plot to.
 
 """
-function plot_power_production(data::ModelData, file::HDF5.File, target_dir::String)
+function plot_power_production(file::HDF5.File, target_dir::String)
 
     # TODO: remove unneeded output:
     @info "plotted power production"
@@ -122,13 +117,14 @@ function plot_power_production(data::ModelData, file::HDF5.File, target_dir::Str
     plot_file_name = "power_production_yearly.pdf"
 
     # read data from file
-    x = data.years
-    g = zeros(Float64, (data.n_years))
-    r = zeros(Float64, (data.n_years))
-    h = zeros(Float64, (data.n_years))
-    ror = zeros(Float64, (data.n_years))
-    ct = zeros(Float64, (data.n_years))
-    for i in 1:data.n_years
+    x = read(file["parameters"], "years")
+    n_years = length(x)
+    g = zeros(Float64, (n_years))
+    r = zeros(Float64, (n_years))
+    h = zeros(Float64, (n_years))
+    ror = zeros(Float64, (n_years))
+    ct = zeros(Float64, (n_years))
+    for i in 1:n_years
         g[i] = sum(read(file["model" * string(x[i])], "powerG"))
         r[i] = sum(read(file["model" * string(x[i])], "powerR"))
         h[i] = sum(read(file["model" * string(x[i])], "powerH"))
@@ -149,20 +145,18 @@ end
 
 
 """
-    plot_built_capacities(data::ModelData, file::HDF5.File, target_dir::String)
+    plot_built_capacities(file::HDF5.File, target_dir::String)
 
 This function creates a stacked bar plot of the newly built capacities of each power source and saves it into a `.PDF` file.
 
 # Arguments
-
-**`data`** is the datastructure containing all the parameters of the model and of the type `ModelData`.
 
 **`file`** is the `HDF5`-file containing the results of the simulation.
 
 **`target_dir`** is the directory in which to save the plot to.
 
 """
-function plot_built_capacities(data::ModelData, file::HDF5.File, target_dir::String)
+function plot_built_capacities(file::HDF5.File, target_dir::String)
 
     # TODO: remove unneeded output:
     @info "plotted built capacities"
@@ -173,13 +167,14 @@ function plot_built_capacities(data::ModelData, file::HDF5.File, target_dir::Str
     plot_file_name = "built_capacities_yearly.pdf"
 
     # read data from file
-    x = data.years
-    g = zeros(Float64, (data.n_years))
-    r = zeros(Float64, (data.n_years))
-    h = zeros(Float64, (data.n_years))
-    st = zeros(Float64, (data.n_years))
-    ct = zeros(Float64, (data.n_years))
-    for i in 1:data.n_years
+    x = read(file["parameters"], "years")
+    n_years = length(x)
+    g = zeros(Float64, (n_years))
+    r = zeros(Float64, (n_years))
+    h = zeros(Float64, (n_years))
+    st = zeros(Float64, (n_years))
+    ct = zeros(Float64, (n_years))
+    for i in 1:n_years
         g[i] = sum(read(file["model" * string(x[i])], "pG"))
         r[i] = sum(read(file["model" * string(x[i])], "pR"))
         h[i] = sum(read(file["model" * string(x[i])], "pH"))

@@ -164,12 +164,9 @@ function run_sim(; config::AbstrConfiguration = SingleObjectiveBasicConfig(), sc
     # after all simulations write existing capacities of each years to file
     write_parameters(data, scenario_dir = scenario_dir)
 
-    # TODO: WRITE CAPAS to file!!!
-    # write parameter data to file
-    # plot all data
-    # plot some overarching figures
-
-    create_plots(data)
+    # plot model results
+    # TODO: to be extended to visualize more aspects
+    create_plots(scenario_dir = scenario_dir)
 
     @info "end of run_sim()"
     return nothing
