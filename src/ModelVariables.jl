@@ -1,9 +1,14 @@
 # TODO: rewrite docstring
 # Variable creation
 """
-docstring of this function
+    add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data::ModelData, i_current_year::Int64)
+
+TODO: docstring of this function
 
     ... right now just all variables independent of actual config...
+
+# Arguments
+
 """
 function add_model_variables(model::JuMP.Model, config::AbstrConfiguration, data::ModelData, i_current_year::Int64)
 

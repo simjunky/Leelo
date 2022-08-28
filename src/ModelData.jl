@@ -792,8 +792,8 @@ It provides a short overview of the covered years, nodes and number of different
 function Base.show(io::IO, data::ModelData)
 
     # provide a short overview over the model
-    println(io,
-    "Leelo.ModelData:\nModel covering the years:" * join( " " .* string.(data.years)) * "\n" *
+    print(io,
+    "Leelo.ModelData:\nModel covering the years:" * join( " " .* string.(data.years)) * " with " * string(data.n_timesteps) * " timesteps each\n" *
     "Model contains\n    " *
     string(data.n_buses) * " nodes\n    " *
     string(data.n_conv_generators) * " conventional generators\n    " *

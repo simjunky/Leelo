@@ -2,7 +2,12 @@
 # TODO: rewrite docstring
 # Constraint creation
 """
+    add_model_constraints(model::JuMP.Model, config::SingleObjectiveBasicConfig, data::ModelData, i_current_year::Int64)
+
 TODO
+
+# Arguments
+
 """
 function add_model_constraints(model::JuMP.Model, config::SingleObjectiveBasicConfig, data::ModelData, i_current_year::Int64)
 
@@ -19,7 +24,12 @@ end
 # TODO: rewrite docstring
 # Constraint creation
 """
+    add_model_constraints(model::JuMP.Model, config::SingleObjectiveMultiServiceConfig, data::ModelData, i_current_year::Int64)
+
 TODO
+
+# Arguments
+
 """
 function add_model_constraints(model::JuMP.Model, config::SingleObjectiveMultiServiceConfig, data::ModelData, i_current_year::Int64)
 
@@ -37,7 +47,12 @@ end
 # TODO: rewrite docstring
 # Constraint creation for one specific year
 """
+    add_single_objective_constraints(model::JuMP.Model, data::ModelData, i_current_year::Int64)
+
 This is currently the function called to add constraints to the model for the computation for one given year.
+
+# Arguments
+
 """
 function add_single_objective_constraints(model::JuMP.Model, data::ModelData, i_current_year::Int64)
 
@@ -549,7 +564,12 @@ end
 # TODO: rewrite docstring
 # Constraint creation for one specific year
 """
+    add_multi_service_constraints(model::JuMP.Model, data::ModelData, i_current_year::Int64)
+
 TODO
+
+# Arguments
+
 """
 function add_multi_service_constraints(model::JuMP.Model, data::ModelData, i_current_year::Int64)
 

@@ -2,7 +2,12 @@
 # TODO: rewrite docstring
 # Objective creation
 """
+    add_model_objective(model::JuMP.Model, config::AbstrConfiguration)
+
 TODO
+
+# Arguments
+
 """
 function add_model_objective(model::JuMP.Model, config::AbstrConfiguration)
 
@@ -10,7 +15,7 @@ function add_model_objective(model::JuMP.Model, config::AbstrConfiguration)
     @info "adding objective function"
 
     # TODO: config not yet in use... only needed for Multiobjective optimization... when LCA is implemented...
-    
+
     TotalCost = model[:TotalCost]
     @objective(model, Min, TotalCost)
 
