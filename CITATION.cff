@@ -1,10 +1,14 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
-  - family-names: Martin
-    given-names: Patrick
-    orcid: https://orcid.org/0000-0001-6882-4506
-title: "Leelo.jl - "
-version: 0.1.0
-doi: TBD
+  - family-names: "Martin"
+    given-names: "Patrick"
+    orcid: "https://orcid.org/0000-0001-6882-4506"
+  - family-names: "Haas"
+    given-names: "Jannik"
+    orcid: "https://orcid.org/0000-0003-2604-6456"
+title: "Leelo.jl - Implementation of a system analysis tool for energy expansion planning"
+version: 1.0.0
+doi: 10.5281/zenodo.7078471
+url: "https://github.com/simjunky/Leelo"
 date-released: 2022-09-14
