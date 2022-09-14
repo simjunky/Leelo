@@ -289,7 +289,7 @@ struct ModelData
     pumpedGoesTo::Array{String, 1}
     # (h) minimum spilled or ecological flow of h
     qDivertedMinH::Array{Float64, 1}
-    # (t, h) inflows to h in time t
+    # (t, h) inflows to h in time t in [m^3/s]
     qInflowH::Array{Float64, 2}
     # (h) evaporation or infiltration losses factor
     lossesH::Array{Float64, 1}

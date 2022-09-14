@@ -173,8 +173,9 @@ function add_single_objective_constraints(model::JuMP.Model, data::ModelData, i_
     # eInvestmentCostO     .. ICo =e= 0;
 
 
-    # yearly investment into transmission lines
-    # Calculated by multiplying the interest dependent annuity factor with the capital cost per installed MW times the newly built capacity (scaled to MW)
+    # total yearly investment costs
+    # Calculated as the sum sum of all individual investment costs, scaled down to match the simulated time span.
+    # TODO: why is there a *1000??? (It also was in the GAMS code)
     ICt = model[:ICt]
     @constraint(model, eInvestmentCostT, ICt == data.fractionOfYear * 1000 * (ICr + ICg + ICs + ICl + ICh) )
 
@@ -270,6 +271,7 @@ eEpsilonTLCA(ic)                 ..TotalLCA(ic)=l=EpsilonLCA(ic);
 
     # total ammount of generated power during the year
     # Calculated by adding total power generation of conventional, renewable, hydro and run-of-river power generation.
+    # TODO: shouldnt CSP power generation be included here as well?
     TotalGeneratedPower = model[:TotalGeneratedPower]
     @constraint(model, eGeneratedPower, TotalGeneratedPower == sum(powerG[t, b, g] for t in 1:data.n_timesteps, b in 1:data.n_buses, g in 1:data.n_conv_generators) + sum(powerR[t, b, r] for t in 1:data.n_timesteps, b in 1:data.n_buses, r in 1:data.n_ren_generators) + sum(powerH[t, h] for t in 1:data.n_timesteps, h in 1:data.n_hydro_generators) + sum(powerRoR[t, ror] for t in 1:data.n_timesteps, ror in 1:data.n_ror_generators) )
 
@@ -330,6 +332,9 @@ eRampsCoal4(t,b)                      ..rampsAuxCoal4(t,b) =l=PexistingG(b,'g1')
     # the power produced by csp is limited by the generation profile (available sunshine) times the total installed capacity.
     # Note: CSP is implemented as conversion technology rather than renewable due to its possibility to store energy as heat.
     @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies; data.vectorCT_O[ct] == "sun"], powerCT[t, b, ct] <= data.ProfilesCSP[t, b] * (1000 * pCT[b, ct] + data.pexistingCT[b, ct, i_current_year]) )
+
+
+    # CASCADING HYDROPOWER
 
 
     # change in stored water for hydro generators
@@ -440,6 +445,12 @@ eVolumeFinH(tlast,h)           .. storedH(tlast,h)  =e= vFinH(h);
     # calculated by summing up the losses of stored energy, the sum of energy converted using electricity and the sum converted from other sources. Then, the sum of expended stored energy is subtracted.
     vLossST = model[:vLossST]
     @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, st in 1:data.n_storage_technologies; t < data.n_timesteps], storedST[t + 1, b, st] - storedST[t, b, st] == -vLossST[t, b, st] + sum(data.conversionFactorCT[ct, i_current_year] * data.conversionEfficiencyCT[ct, i_current_year] * powerCT[t, b, ct] * data.dt for ct in 1:data.n_conversion_technologies if ((data.vectorCT_D[ct] == data.storageEntityST[st]) && (data.vectorCT_O[ct] == "e"))) + sum(data.conversionEfficiencyCT[ct, i_current_year] * powerCT[t, b, ct] * data.dt for ct in 1:data.n_conversion_technologies if ((data.vectorCT_D[ct] == data.storageEntityST[st]) && (data.vectorCT_O[ct] != "e"))) - sum(powerCT[t, b, ct] / (data.conversionFactorCT[ct, i_current_year] * data.conversionEfficiencyCT[ct, i_current_year]) * data.dt for ct in 1:data.n_conversion_technologies if (data.vectorCT_O[ct] == data.storageEntityST[st])) )
+
+
+    # limit for conversion with origin entities not stored in any storage technology
+    # destination products are not checked, because if it is an intermediary product (i.e. != "e") it must have another technology which is included here to turn it into something useful. Else it is a conversion path with a dead end and therefore can be ignored, since it only wastes power.
+    # TODO
+    @constraint(model, [t in 1:data.n_timesteps, b in 1:data.n_buses, ct in 1:data.n_conversion_technologies; !((data.vectorCT_O[ct] in data.storageEntityST) || (data.vectorCT_O[ct] in ["e", "sun"]))], sum(powerCT[t, b, ct_1] for ct_1 in 1:data.n_conversion_technologies if (data.vectorCT_O[ct_1] == data.vectorCT_O[ct]) ) == sum(powerCT[t, b, ct_2] for ct_2 in 1:data.n_conversion_technologies if ((ct != ct_2) && (data.vectorCT_D[ct_2] == data.vectorCT_O[ct]))) )
 
 
     # storage boundary condition
