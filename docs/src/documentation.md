@@ -1,4 +1,4 @@
-# Documentaion
+# Documentation
 
 To get an introduction into how to use `Leelo.jl`, refer to the [Manual](@ref) section.
 

@@ -23,7 +23,7 @@ And now this (Links):
 
 ## Other stuff
 
-!!! waring
+!!! warning
     This is a warning box.
 
 and others:
